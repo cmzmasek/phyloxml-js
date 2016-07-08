@@ -20,6 +20,8 @@
  *  Created by czmasek on 7/7/2016.
  */
 
+"use strict";
+
 var phyloxml_parser = require('./phyloxml_parser');
 var fs = require('fs');
 

@@ -47,13 +47,26 @@
  */
 (function phyloXmlParser() {
 
-    var sax = require('./lib/sax');
+    "use strict";
+
+    var sax = null;
+    if (typeof module !== 'undefined' && module.exports && !global.xmldocAssumeBrowser) {
+        // Being used in a Node-like environment
+        sax = require('./lib/sax');
+    }
+    else {
+        // Attached to the Window object in a browser
+        sax = this.sax;
+        if (!sax) {
+            throw new Error("Expected sax to be defined. Make sure you are including sax.js before this file.");
+        }
+    }
     
     // --------------------------------------------------------------
     // phyloXML constants
     // --------------------------------------------------------------
     const PHYLOGENY = 'phylogeny';
-
+    
     // Id
     const ID = 'id';
     const ID_PROVIDER_ATTR = 'provider';
@@ -651,7 +664,6 @@
         };
 
         sax_parser.write(source).close();
-        delete sax_parser;
         return _phylogenies;
     };
 
