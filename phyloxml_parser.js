@@ -202,187 +202,6 @@
     var objectStack = null;
 
     // -----------
-    function Accession() {
-        console.log(" --NEW ACC-- ");
-        this.source = null;
-        this.value = null;
-        this.comment = undefined;
-    }
-
-    function Annotation() {
-        console.log(" --NEW ANNOTATION-- ");
-        this.confidence = undefined;
-        this.desc = undefined;
-        this.evidence = undefined;
-        this.ref = undefined;
-        this.properties = undefined;
-        this.source = undefined;
-        this.type = undefined;
-        this.uris = undefined;
-    }
-
-    function Color() {
-        console.log(" --NEW COLOR-- ");
-        this.red = null;
-        this.green = null;
-        this.blue = null;
-        this.alpha = undefined;
-    }
-
-    function Clade() {
-        //console.log( " --NEW CLADE-- " );
-        this.name = undefined;
-        this.branch_length = undefined;
-        this.confidences = undefined;
-        this.width = undefined;
-        this.color = undefined;
-        this.taxonomies = undefined;
-        this.sequences = undefined;
-        this.collapse = undefined;
-        this.clades = undefined;
-        this.distributions = undefined;
-        this.properties = undefined;
-        this.references = undefined;
-        this.date = undefined;
-        this.events = undefined;
-    }
-
-    function Confidence() {
-        console.log(" --NEW CONFIDENCE-- ");
-        this.type = null;
-        this.value = null;
-        this.stddev = undefined;
-    }
-
-    function Date() {
-        console.log(" --NEW DATE- ");
-        this.unit = undefined;
-        this.desc = undefined;
-        this.value = undefined;
-        this.minimum = undefined;
-        this.maximum = undefined;
-    }
-
-    function Distribution() {
-        console.log(" --NEW DISTRIBUTION-- ");
-        this.desc = null;
-    }
-
-    function DomainArchitecture() {
-        console.log(" --NEW DOMAIN ARCHITECTURE-- ");
-        this.length = null;
-        this.domains = null;
-    }
-
-    function Events() {
-        console.log(" --NEW EVENTS-- ");
-        this.type = undefined;
-        this.duplications = undefined;
-        this.speciations = undefined;
-        this.losses = undefined;
-        this.confidence = undefined;
-    }
-
-    function Id() {
-        console.log(" --NEW ID-- ");
-        this.provider = null;
-        this.value = null;
-    }
-
-    function Property() {
-        console.log(" --NEW PROPERTY -- ");
-        this.ref = null;
-        this.id_ref = undefined;
-        this.unit = undefined;
-        this.datatype = null;
-        this.applies_to = null;
-    }
-
-    function ProteinDomain() {
-        console.log(" -- NEW PROTEIN DOMAIN -- ");
-        this.name = null;
-        this.from = null;
-        this.to = null;
-        this.confidence = undefined;
-        this.id = undefined;
-    }
-
-    function Reference() {
-        console.log(" -- NEW REFERENCE -- ");
-        this.doi = undefined;
-        this.desc = undefined;
-    }
-
-    function Sequence() {
-        //console.log(" --NEW SEQUENCE-- ");
-        this.type = undefined;
-        this.id_source = undefined;
-        this.id_ref = undefined;
-        this.symbol = undefined;
-        this.accession = undefined;
-        this.name = undefined;
-        this.gene_name = undefined;
-        this.location = undefined;
-        this.mol_seq = undefined;
-        this.uris = undefined;
-        this.annotations = undefined;
-        this.domain_architecture = undefined;
-        this.seq_relations = undefined;
-        this.cross_references = undefined;
-    }
-
-    function SequenceRelation() {
-        console.log(" --SEQUENCE RELATION-- ");
-        this.id_ref_0 = null;
-        this.id_ref_1 = null;
-        this.type = null;
-        this.distance = undefined;
-        this.confidenc = undefined;
-    }
-
-    function Taxonomy() {
-        //console.log(" --NEW TAXONOMY-- ");
-        this.id_source = undefined;
-        this.id = undefined;
-        this.code = undefined;
-        this.scientific_name = undefined;
-        this.authority = undefined;
-        this.common_names = undefined;
-        this.synonyms = undefined;
-        this.rank = undefined;
-        this.uris = undefined;
-    }
-
-    function Uri() {
-        console.log(" --NEW URI-- ");
-        this.type = undefined;
-        this.desc = undefined;
-        this.value = null;
-    }
-
-    // -----------
-
-
-    // Stack ----
-
-    function Stack() {
-        this._stack = [];
-        this.pop = function () {
-            return this._stack.pop();
-        };
-        this.push = function (item) {
-            this._stack.push(item);
-        };
-        this.peek = function () {
-            return this._stack[this._stack.length - 1];
-        };
-        this.get = function (i) {
-            return this._stack[this._stack.length - (1 + i)];
-        };
-    }
-    
-    // -----------------
-
 
     // Helper methods ----
 
@@ -417,11 +236,31 @@
 
     // ------------
 
+    // Stack ----
+
+    function Stack() {
+        this._stack = [];
+        this.pop = function () {
+            return this._stack.pop();
+        };
+        this.push = function (item) {
+            this._stack.push(item);
+        };
+        this.peek = function () {
+            return this._stack[this._stack.length - 1];
+        };
+        this.get = function (i) {
+            return this._stack[this._stack.length - (1 + i)];
+        };
+    }
+
+    // -----------------
 
     // Methods for object creation  ---
 
     function newAccession(tag) {
-        var acc = new Accession();
+        var acc = {};
+        acc.value = null;
         acc.source = getAttribute(ACCESSION_SOURCE_ATTR, tag.attributes);
         acc.comment = getAttribute(ACCESSION_COMMENT_ATTR, tag.attributes);
         getCurrentObject().accession = acc;
@@ -430,7 +269,7 @@
 
     //TODO
     function newAnnotation(tag) {
-        var ann = new Annotation();
+        var ann = {};
         ann.evidence = getAttribute(ANNOTATION_EVIDENCE_ATTR, tag.attributes);
         ann.ref = getAttribute(ANNOTATION_REF_ATTR, tag.attributes);
         ann.source = getAttribute(ANNOTATION_SOURCE_ATTR, tag.attributes);
@@ -439,9 +278,8 @@
         objectStack.push(ann);
     }
 
-
     function newClade(tag) {
-        var newClade = new Clade();
+        var newClade = {};
         if (CLADE_BRANCH_LENGTH in tag.attributes) {
             newClade.branch_length = parseFloat(tag.attributes[CLADE_BRANCH_LENGTH]);
         }
@@ -467,13 +305,17 @@
 
     //TODO
     function newColor(tag) {
-        var col = new Color();
+        var col = {};
+        col.red = null;
+        col.green = null;
+        col.blue = null;
         getCurrentObject().color = col;
         objectStack.push(col);
     }
 
     function newConfidence(tag) {
-        var conf = new Confidence();
+        var conf = {};
+        conf.value = null;
         conf.type = getAttribute(CONFIDENCE_TYPE_ATTR, tag.attributes);
         conf.stddev = getAttribute(CONFIDENCE_STDDEV_ATTR, tag.attributes);
         addToArrayInCurrentObject('confidences', conf);
@@ -482,7 +324,7 @@
 
     //TODO
     function newDate(tag) {
-        var date = new Date();
+        var date = {};
         date.unit = getAttribute(DATE_UNIT_ATTR, tag.attributes);
         getCurrentObject().date = date;
         objectStack.push(date);
@@ -490,7 +332,8 @@
 
     //TODO
     function newDistribution(tag) {
-        var dist = new Distribution();
+        var dist = {};
+        dist.desc = null;
         dist.unit = getAttribute(DATE_UNIT_ATTR, tag.attributes);
         addToArrayInCurrentObject('distributions', dist);
         objectStack.push(dist);
@@ -498,19 +341,22 @@
 
     //TODO
     function newDomainArchitecture(tag) {
-        var da = new DomainArchitecture();
+        var da = {};
+        da.domains = null;
         da.length = getAttribute(DOMAIN_ARCHITECTURE_LENGTH_ATTR, tag.attributes);
         getCurrentObject().domain_architecture = da;
     }
 
     //TODO
     function newEvents(tag) {
-        var events = new Events();
+        var events = {};
         getCurrentObject().events = events;
+        objectStack.push(events);
     }
 
     function newId(tag) {
-        var i = new Id();
+        var i = {};
+        i.value = null;
         i.provider = getAttribute(ID_PROVIDER_ATTR, tag.attributes);
         getCurrentObject().id = i;
         objectStack.push(i);
@@ -518,7 +364,7 @@
 
     //TODO
     function newProperty(tag) {
-        var prop = new Property();
+        var prop = {};
         prop.ref = getAttribute(PROPERTY_REF_ATTR, tag.attributes);
         prop.unit = getAttribute(PROPERTY_UNIT_ATTR, tag.attributes);
         prop.datatype = getAttribute(PROPERTY_DATATYPE_ATTR, tag.attributes);
@@ -531,6 +377,7 @@
     //TODO
     function newProteinDomain(tag) {
         var pd = new ProteinDomain();
+        pd.name = null;
         pd.from = getAttribute(PROTEINDOMAIN_FROM_ATTR, tag.attributes);
         pd.to = getAttribute(PROTEINDOMAIN_TO_ATTR, tag.attributes);
         pd.confidence = getAttribute(PROTEINDOMAIN_CONFIDENCE_ATTR, tag.attributes);
@@ -541,14 +388,14 @@
 
     //TODO
     function newReference(tag) {
-        var reference = new Reference();
+        var reference = {};
         reference.doi = getAttribute(REFERENCE_DOI_ATTR, tag.attributes);
         addToArrayInCurrentObject('references', reference);
         objectStack.push(reference);
     }
 
     function newSequence(tag) {
-        var seq = new Sequence();
+        var seq = {};
         seq.type = getAttribute(SEQUENCE_TYPE_ATTR, tag.attributes);
         seq.id_source = getAttribute(SEQUENCE_ID_SOURCE_ATTR, tag.attributes);
         seq.id_ref = getAttribute(SEQUENCE_ID_REF_ATTR, tag.attributes);
@@ -558,7 +405,7 @@
 
     //TODO
     function newSequenceRelation(tag) {
-        var seqrel = new SequenceRelation();
+        var seqrel = {};
         seqrel.distance = getAttribute(SEQUENCE_RELATION_DISTANCE_ATTR, tag.attributes);
         seqrel.id_ref_0 = getAttribute(SEQUENCE_RELATION_ID_REF_0_ATTR, tag.attributes);
         seqrel.id_ref_1 = getAttribute(SEQUENCE_RELATION_ID_REF_1_ATTR, tag.attributes);
@@ -568,15 +415,15 @@
     }
 
     function newTaxonomy(tag) {
-        var tax = new Taxonomy();
+        var tax = {};
         tax.id_source = getAttribute(CLADE_ID_SOURCE_ATTR, tag.attributes);
         addToArrayInCurrentObject('taxonomies', tax);
         objectStack.push(tax);
     }
 
-
     function newUri(tag) {
-        var uri = new Uri();
+        var uri = {};
+        uri.value = null;
         uri.desc = getAttribute(URI_DESC_ATTR, tag.attributes);
         uri.type = getAttribute(URI_TYPE_ATTR, tag.attributes);
         addToArrayInCurrentObject('uris', uri);
