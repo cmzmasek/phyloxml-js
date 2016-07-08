@@ -48,7 +48,10 @@
 (function phyloXmlParser() {
 
     var sax = require('./lib/sax');
-
+    
+    // --------------------------------------------------------------
+    // phyloXML constants
+    // --------------------------------------------------------------
     const PHYLOGENY = 'phylogeny';
 
     // Id
@@ -195,76 +198,25 @@
     const BINARY_CHARACTERS_PRESENT = 'present';
     const BINARY_CHARACTERS_ABSENT = 'absent';
 
-    var phylogenies = null;
-    var phylogeny = null;
-    var cladeStack = null;
-    var tagStack = null;
-    var objectStack = null;
+    // --------------------------------------------------------------
+    // Instance variables
+    // --------------------------------------------------------------
+    var _phylogenies = null;
+    var _phylogeny = null;
+    var _cladeStack = null;
+    var _tagStack = null;
+    var _objectStack = null;
 
-    // -----------
-
-    // Helper methods ----
-
-    function getCurrentClade() {
-        return cladeStack.peek();
-    }
-
-    function getCurrentTag() {
-        return tagStack.peek();
-    }
-
-    function getCurrentObject() {
-        return objectStack.peek();
-    }
-
-    function getAttribute(attribute_name, attributes) {
-        if (attribute_name in attributes) {
-            return attributes[attribute_name];
-        }
-        return undefined;
-    }
-
-    function addToArrayInCurrentObject(m, value) {
-        var obj = getCurrentObject()[m];
-        if (obj == undefined) {
-            getCurrentObject()[m] = [value];
-        }
-        else {
-            obj.push(value);
-        }
-    }
-
-    // ------------
-
-    // Stack ----
-
-    function Stack() {
-        this._stack = [];
-        this.pop = function () {
-            return this._stack.pop();
-        };
-        this.push = function (item) {
-            this._stack.push(item);
-        };
-        this.peek = function () {
-            return this._stack[this._stack.length - 1];
-        };
-        this.get = function (i) {
-            return this._stack[this._stack.length - (1 + i)];
-        };
-    }
-
-    // -----------------
-
-    // Methods for object creation  ---
-
+    // --------------------------------------------------------------
+    // Functions for object creation
+    // --------------------------------------------------------------
     function newAccession(tag) {
         var acc = {};
         acc.value = null;
         acc.source = getAttribute(ACCESSION_SOURCE_ATTR, tag.attributes);
         acc.comment = getAttribute(ACCESSION_COMMENT_ATTR, tag.attributes);
         getCurrentObject().accession = acc;
-        objectStack.push(acc);
+        _objectStack.push(acc);
     }
 
     //TODO
@@ -275,7 +227,7 @@
         ann.source = getAttribute(ANNOTATION_SOURCE_ATTR, tag.attributes);
         ann.type = getAttribute(ANNOTATION_TYPE_ATTR, tag.attributes);
         addToArrayInCurrentObject('annotations', ann);
-        objectStack.push(ann);
+        _objectStack.push(ann);
     }
 
     function newClade(tag) {
@@ -287,8 +239,8 @@
             //TODO not implemented yet
             newClade.id_source = tag.attributes[CLADE_ID_SOURCE_ATTR];
         }
-        if (phylogeny == null) {
-            phylogeny = newClade;
+        if (_phylogeny == null) {
+            _phylogeny = newClade;
         }
         else {
             var currClade = getCurrentClade();
@@ -299,8 +251,8 @@
                 currClade.clades.push(newClade);
             }
         }
-        cladeStack.push(newClade);
-        objectStack.push(newClade);
+        _cladeStack.push(newClade);
+        _objectStack.push(newClade);
     }
 
     //TODO
@@ -310,7 +262,7 @@
         col.green = null;
         col.blue = null;
         getCurrentObject().color = col;
-        objectStack.push(col);
+        _objectStack.push(col);
     }
 
     function newConfidence(tag) {
@@ -319,7 +271,7 @@
         conf.type = getAttribute(CONFIDENCE_TYPE_ATTR, tag.attributes);
         conf.stddev = getAttribute(CONFIDENCE_STDDEV_ATTR, tag.attributes);
         addToArrayInCurrentObject('confidences', conf);
-        objectStack.push(conf);
+        _objectStack.push(conf);
     }
 
     //TODO
@@ -327,7 +279,7 @@
         var date = {};
         date.unit = getAttribute(DATE_UNIT_ATTR, tag.attributes);
         getCurrentObject().date = date;
-        objectStack.push(date);
+        _objectStack.push(date);
     }
 
     //TODO
@@ -336,7 +288,7 @@
         dist.desc = null;
         dist.unit = getAttribute(DATE_UNIT_ATTR, tag.attributes);
         addToArrayInCurrentObject('distributions', dist);
-        objectStack.push(dist);
+        _objectStack.push(dist);
     }
 
     //TODO
@@ -351,7 +303,7 @@
     function newEvents(tag) {
         var events = {};
         getCurrentObject().events = events;
-        objectStack.push(events);
+        _objectStack.push(events);
     }
 
     function newId(tag) {
@@ -359,7 +311,7 @@
         i.value = null;
         i.provider = getAttribute(ID_PROVIDER_ATTR, tag.attributes);
         getCurrentObject().id = i;
-        objectStack.push(i);
+        _objectStack.push(i);
     }
 
     //TODO
@@ -371,19 +323,19 @@
         prop.applies_to = getAttribute(PROPERTY_APPLIES_TO_ATTR, tag.attributes);
         prop.id_ref = getAttribute(PROPERTY_ID_REF_ATTR, tag.attributes);
         addToArrayInCurrentObject('properties', prop);
-        objectStack.push(prop);
+        _objectStack.push(prop);
     }
 
     //TODO
     function newProteinDomain(tag) {
-        var pd = new ProteinDomain();
+        var pd = {};
         pd.name = null;
         pd.from = getAttribute(PROTEINDOMAIN_FROM_ATTR, tag.attributes);
         pd.to = getAttribute(PROTEINDOMAIN_TO_ATTR, tag.attributes);
         pd.confidence = getAttribute(PROTEINDOMAIN_CONFIDENCE_ATTR, tag.attributes);
         pd.id = getAttribute(PROTEINDOMAIN_ID_ATTR, tag.attributes);
         addToArrayInCurrentObject('domains', pd);
-        objectStack.push(pd);
+        _objectStack.push(pd);
     }
 
     //TODO
@@ -391,7 +343,7 @@
         var reference = {};
         reference.doi = getAttribute(REFERENCE_DOI_ATTR, tag.attributes);
         addToArrayInCurrentObject('references', reference);
-        objectStack.push(reference);
+        _objectStack.push(reference);
     }
 
     function newSequence(tag) {
@@ -400,7 +352,7 @@
         seq.id_source = getAttribute(SEQUENCE_ID_SOURCE_ATTR, tag.attributes);
         seq.id_ref = getAttribute(SEQUENCE_ID_REF_ATTR, tag.attributes);
         addToArrayInCurrentObject('sequences', seq);
-        objectStack.push(seq);
+        _objectStack.push(seq);
     }
 
     //TODO
@@ -411,14 +363,14 @@
         seqrel.id_ref_1 = getAttribute(SEQUENCE_RELATION_ID_REF_1_ATTR, tag.attributes);
         seqrel.type = getAttribute(SEQUENCE_RELATION_TYPE_ATTR, tag.attributes);
         //TODO
-        objectStack.push(seqrel);
+        _objectStack.push(seqrel);
     }
 
     function newTaxonomy(tag) {
         var tax = {};
         tax.id_source = getAttribute(CLADE_ID_SOURCE_ATTR, tag.attributes);
         addToArrayInCurrentObject('taxonomies', tax);
-        objectStack.push(tax);
+        _objectStack.push(tax);
     }
 
     function newUri(tag) {
@@ -427,11 +379,12 @@
         uri.desc = getAttribute(URI_DESC_ATTR, tag.attributes);
         uri.type = getAttribute(URI_TYPE_ATTR, tag.attributes);
         addToArrayInCurrentObject('uris', uri);
-        objectStack.push(uri);
+        _objectStack.push(uri);
     }
 
-    // ------------
-
+    // --------------------------------------------------------------
+    // Functions for processing text
+    // --------------------------------------------------------------
     function inClade(text) {
         if (getCurrentTag() == CLADE_NAME) {
             getCurrentClade().name = text;
@@ -459,7 +412,6 @@
     function inUri(text) {
         getCurrentObject().value = text;
     }
-
 
     function inTaxonomy(text) {
         if (getCurrentTag() == TAXONOMY_CODE) {
@@ -497,8 +449,11 @@
         }
     }
 
+    // --------------------------------------------------------------
+    // Functions for SAX parser
+    // --------------------------------------------------------------
     function phyloxmlOnopentag(tag) {
-        tagStack.push(tag.name);
+        _tagStack.push(tag.name);
         switch (tag.name) {
             case PHYLOGENY:
                 //TODO
@@ -529,13 +484,13 @@
     }
 
     function phyloxmlOnclosetag(tag) {
-        tagStack.pop();
+        _tagStack.pop();
         if (tag == CLADE) {
-            cladeStack.pop();
-            objectStack.pop();
+            _cladeStack.pop();
+            _objectStack.pop();
         }
         else if (tag == PHYLOGENY) {
-            phylogenies.push(phylogeny);
+            _phylogenies.push(_phylogeny);
             startNewPhylogeny();
         }
         else if (tag == TAXONOMY
@@ -544,18 +499,18 @@
             || tag == SEQUENCE
             || tag == ACCESSION
             || tag == URI) {
-            objectStack.pop();
+            _objectStack.pop();
         }
     }
 
     function phyloxmlOntext(text) {
-        var parentTag = tagStack.get(1);
+        var parentTag = _tagStack.get(1);
 
-        if (tagStack.get(1) == CLADE) {
+        if (_tagStack.get(1) == CLADE) {
             inClade(text);
         }
 
-        var currentTag = tagStack.peek();
+        var currentTag = _tagStack.peek();
 
         if (currentTag == CONFIDENCE) {
             inConfidence(text);
@@ -590,15 +545,69 @@
         // Ignoring: oncdata, oncomment, ondoctype
     }
 
-    function startNewPhylogeny() {
-        phylogeny = null;
-        cladeStack = new Stack();
-        tagStack = new Stack();
-        objectStack = new Stack();
+    // --------------------------------------------------------------
+    // Helper functions
+    // --------------------------------------------------------------
+    function getCurrentClade() {
+        return _cladeStack.peek();
     }
 
+    function getCurrentTag() {
+        return _tagStack.peek();
+    }
+
+    function getCurrentObject() {
+        return _objectStack.peek();
+    }
+
+    function getAttribute(attribute_name, attributes) {
+        if (attribute_name in attributes) {
+            return attributes[attribute_name];
+        }
+        return undefined;
+    }
+
+    function addToArrayInCurrentObject(m, value) {
+        var obj = getCurrentObject()[m];
+        if (obj == undefined) {
+            getCurrentObject()[m] = [value];
+        }
+        else {
+            obj.push(value);
+        }
+    }
+
+    function startNewPhylogeny() {
+        _phylogeny = null;
+        _cladeStack = new Stack();
+        _tagStack = new Stack();
+        _objectStack = new Stack();
+    }
+
+    // --------------------------------------------------------------
+    // Stack
+    // --------------------------------------------------------------
+    function Stack() {
+        this._stack = [];
+        this.pop = function () {
+            return this._stack.pop();
+        };
+        this.push = function (item) {
+            this._stack.push(item);
+        };
+        this.peek = function () {
+            return this._stack[this._stack.length - 1];
+        };
+        this.get = function (i) {
+            return this._stack[this._stack.length - (1 + i)];
+        };
+    }
+
+    // --------------------------------------------------------------
+    // Main functions
+    // --------------------------------------------------------------
     phyloXmlParser.parseAsync = function (stream, parse_options) {
-        phylogenies = [];
+        _phylogenies = [];
         startNewPhylogeny();
         var sax_parser = sax.createStream(true, parse_options);
         addPhyloxmlParserEvents(sax_parser);
@@ -608,12 +617,12 @@
             console.log();
             console.log("parseAsync: THE END");
             console.log();
-            var len = phylogenies.length;
+            var len = _phylogenies.length;
             console.log("Parsed " + len + " trees:");
             for (var i = 0; i < len; i++) {
                 console.log();
                 console.log("Tree " + i + ":");
-                var str = JSON.stringify(phylogenies[i], null, 2);
+                var str = JSON.stringify(_phylogenies[i], null, 2);
                 console.log(str);
             }
         });
@@ -630,7 +639,7 @@
             throw new Error('phyloXML source is empty');
         }
 
-        phylogenies = [];
+        _phylogenies = [];
         startNewPhylogeny();
         var sax_parser = sax.parser(true, parse_options);
         addPhyloxmlParserEvents(sax_parser);
@@ -643,9 +652,12 @@
 
         sax_parser.write(source).close();
         delete sax_parser;
-        return phylogenies;
+        return _phylogenies;
     };
-    
+
+    // --------------------------------------------------------------
+    // For exporting
+    // --------------------------------------------------------------
     if (typeof module !== 'undefined' && module.exports && !global.xmldocAssumeBrowser)
         module.exports.phyloXmlParser = phyloXmlParser;
     else

@@ -24,11 +24,11 @@ var phyloxml_parser = require('./phyloxml_parser');
 var fs = require('fs');
 
 //var xmlfile = require('path').join(__dirname, "./data/two_trees.xml");
-//var xmlfile = require('path').join(__dirname, "./data/example_2.xml");
+var xmlfile = require('path').join(__dirname, "./data/example_2.xml");
 //var xmlfile = require('path').join(__dirname, "./data/apaf.xml");
 //var xmlfile = require('path').join(__dirname, "./data/amphi_frost.xml");
 //var xmlfile = require('path').join(__dirname, "./data/ncbi_taxonomy.xml");
-var xmlfile = require('path').join(__dirname, "./data/phyloxml_test1.xml");
+//var xmlfile = require('path').join(__dirname, "./data/phyloxml_test1.xml");
 
 
 // Synchronous parsing of phyloXML-formatted string:
