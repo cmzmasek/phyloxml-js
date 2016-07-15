@@ -20,7 +20,6 @@
  *  Created by czmasek on 7/7/2016.
  */
 
-
 /**
  * This requires sax-js from https://github.com/isaacs/sax-js
  * 
@@ -54,8 +53,13 @@
         // Being used in a Node-like environment
         sax = require('./lib/sax');
     }
-    else {
+    else if (typeof window !== "undefined") {
         // Attached to the Window object in a browser
+        sax = window.sax;
+        if (!sax) {
+            throw new Error("Expected sax to be defined. Make sure you are including sax.js before this file.");
+        }
+    }else{
         sax = this.sax;
         if (!sax) {
             throw new Error("Expected sax to be defined. Make sure you are including sax.js before this file.");
@@ -672,7 +676,8 @@
     // --------------------------------------------------------------
     if (typeof module !== 'undefined' && module.exports && !global.xmldocAssumeBrowser)
         module.exports.phyloXmlParser = phyloXmlParser;
+    else if (typeof window !== "undefined")
+        window.phyloXmlParser = phyloXmlParser;
     else
         this.phyloXmlParser = phyloXmlParser;
-
 })();
