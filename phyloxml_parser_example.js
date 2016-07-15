@@ -25,9 +25,25 @@
 var phyloxml_parser = require('./phyloxml_parser');
 var fs = require('fs');
 
+var a = require('path').join(__dirname, "./data/two_trees.xml");
+var b = require('path').join(__dirname, "./data/example_2.xml");
+var c = require('path').join(__dirname, "./data/apaf.xml");
+var d = require('path').join(__dirname, "./data/amphi_frost.xml");
+var e = require('path').join(__dirname, "./data/phyloxml_test1.xml");
+var f = require('path').join(__dirname, "./data/phyloxml_test2.xml");
+
+var tests = [a,b,c,d,e,f].forEach(test);
+
+function test(element, index) {
+    console.log( index );
+    var text = fs.readFileSync(element, 'utf8');
+    var p = phyloxml_parser.phyloXmlParser;
+    var phys = p.parse(text, {trim: true, normalize: true});
+}
+
 //var xmlfile = require('path').join(__dirname, "./data/two_trees.xml");
-var xmlfile = require('path').join(__dirname, "./data/example_2.xml");
-//var xmlfile = require('path').join(__dirname, "./data/apaf.xml");
+//var xmlfile = require('path').join(__dirname, "./data/example_2.xml");
+var xmlfile = require('path').join(__dirname, "./data/apaf.xml");
 //var xmlfile = require('path').join(__dirname, "./data/amphi_frost.xml");
 //var xmlfile = require('path').join(__dirname, "./data/ncbi_taxonomy.xml");
 //var xmlfile = require('path').join(__dirname, "./data/phyloxml_test1.xml");
