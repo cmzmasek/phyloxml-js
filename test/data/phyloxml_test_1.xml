@@ -83,7 +83,12 @@
             <point geodetic_datum="WGS84" alt_unit="m">
                <lat>35.9296730123456789</lat>
                <long>-78.9482370123456789</long>
-               <alt>0</alt>
+               <alt>1303</alt>
+            </point>
+            <point geodetic_datum="WGS84" alt_unit="m">
+               <lat>129.549495485834893</lat>
+               <long>-78.00000000000000</long>
+               <alt>1400</alt>
             </point>
          </distribution>
 		 <distribution>
@@ -160,7 +165,7 @@
                   <maximum>443.7</maximum>
                </date>
             </clade>
-            <clade>
+            <clade collapse="false">
                <name>node bb</name>
                <taxonomy>
                    <id provider="EOL">704294</id>

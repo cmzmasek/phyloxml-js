@@ -22,27 +22,27 @@
 
 /**
  * This requires sax-js from https://github.com/isaacs/sax-js
- * 
+ *
  * Usage:
- * 
+ *
  * Synchronous parsing of phyloXML-formatted string:
- * 
+ *
  * var phyloxml_parser = require('./phyloxml_parser');
  * var p = phyloxml_parser.phyloXmlParser;
- * 
+ *
  * var phys = p.parse(phyloxml_text, {trim: true, normalize: true});
- * 
- * 
+ *
+ *
  * Asynchronous parsing of phyloXML-formatted stream:
- * 
+ *
  * var fs = require('fs');
  * var phyloxml_parser = require('./phyloxml_parser');
  * var p = phyloxml_parser.phyloXmlParser;
- * 
+ *
  * var stream = fs.createReadStream(xmlfile, {encoding: 'utf8'});
- * 
+ *
  * p.parseAsync(stream, {trim: true, normalize: true});
- * 
+ *
  */
 (function phyloXmlParser() {
 
@@ -59,7 +59,8 @@
         if (!sax) {
             throw new Error("Expected sax to be defined. Make sure you are including sax.js before this file.");
         }
-    }else{
+    }
+    else {
         sax = this.sax;
         if (!sax) {
             throw new Error("Expected sax to be defined. Make sure you are including sax.js before this file.");
@@ -91,7 +92,6 @@
     const CLADE_NAME = 'name';
     const CLADE_WIDTH = 'width';
 
-
     // Color
     const COLOR = 'color';
     const COLOR_RED = 'red';
@@ -118,8 +118,6 @@
     // Distribution
     const DISTRIBUTION = 'distribution';
     const DISTRIBUTION_DESC = 'desc';
-    //const DISTRIBUTION_POINT = 'point';
-    //const DISTRIBUTION_POLYGON = 'polygon';
 
     // Domain Architecture
     const DOMAIN_ARCHITECTURE = 'domain_architecture';
@@ -145,6 +143,14 @@
 
     // Phyloxml
     const PHYLOXML = 'phyloxml';
+
+    // Point
+    const POINT = 'point';
+    const POINT_ALT_UNIT_ATTR = 'alt_unit';
+    const POINT_GEODETIC_DATUM_ATTR = 'geodetic_datum';
+    const POINT_LAT = 'lat';
+    const POINT_LONG = 'long';
+    const POINT_ALT = 'alt';
 
     // Property
     const PROPERTY = 'property';
@@ -213,8 +219,8 @@
     // --------------------------------------------------------------
     function newAccession(tag) {
         var parent = _tagStack.get(1);
-        if ( !(parent == SEQUENCE || parent == CROSS_REFERENCES) ) {
-            throw new PhyloXmlError( "found accession outside of sequence or cross-references");
+        if (!(parent == SEQUENCE || parent == CROSS_REFERENCES)) {
+            throw new PhyloXmlError("found accession outside of sequence or cross-references");
         }
         var acc = {};
         acc.value = null;
@@ -231,8 +237,8 @@
 
     function newAnnotation(tag) {
         var parent = _tagStack.get(1);
-        if ( parent != SEQUENCE ) {
-            throw new PhyloXmlError( "found annotation outside of sequence");
+        if (parent != SEQUENCE) {
+            throw new PhyloXmlError("found annotation outside of sequence");
         }
         var ann = {};
         ann.evidence = getAttribute(ANNOTATION_EVIDENCE_ATTR, tag.attributes);
@@ -245,8 +251,8 @@
 
     function newBranchColor() {
         var parent = _tagStack.get(1);
-        if ( parent != CLADE ) {
-            throw new PhyloXmlError( "found branch color outside of clade");
+        if (parent != CLADE) {
+            throw new PhyloXmlError("found branch color outside of clade");
         }
         var col = {};
         col.red = null;
@@ -269,15 +275,15 @@
                 throw new PhyloXmlError('severe phyloXML format error');
             }
             _phylogeny = phylogeny_data;
-            _phylogeny.clades = [newClade];
+            _phylogeny.children = [newClade];
         }
         else {
             var currClade = getCurrentClade();
-            if (currClade.clades == undefined) {
-                currClade.clades = [newClade];
+            if (currClade.children == undefined) {
+                currClade.children = [newClade];
             }
             else {
-                currClade.clades.push(newClade);
+                currClade.children.push(newClade);
             }
         }
         _cladeStack.push(newClade);
@@ -290,19 +296,19 @@
         conf.type = getAttribute(CONFIDENCE_TYPE_ATTR, tag.attributes);
         conf.stddev = getAttributeAsFloat(CONFIDENCE_STDDEV_ATTR, tag.attributes);
         var parent = _tagStack.get(1);
-        if ( parent == CLADE || parent == PHYLOGENY  ) {
+        if (parent == CLADE || parent == PHYLOGENY) {
             addToArrayInCurrentObject('confidences', conf);
         }
-        else if ( parent == ANNOTATION || parent == EVENTS ) {
+        else if (parent == ANNOTATION || parent == EVENTS) {
             getCurrentObject().confidence = conf;
         }
         _objectStack.push(conf);
     }
 
     function newCrossReferences() {
-        var parent =  _tagStack.get(1);
-        if ( parent != SEQUENCE ) {
-            throw new PhyloXmlError( "found cross-reference outside of sequence");
+        var parent = _tagStack.get(1);
+        if (parent != SEQUENCE) {
+            throw new PhyloXmlError("found cross-reference outside of sequence");
         }
         var xrefs = [];
         getCurrentObject().cross_references = xrefs;
@@ -332,7 +338,6 @@
         _objectStack.push(da);
     }
 
-
     function newEvents() {
         var events = {};
         getCurrentObject().events = events;
@@ -354,6 +359,17 @@
         _objectStack.push(mol_seq);
     }
 
+    function newPoint(tag) {
+        var p = {};
+        p.alt_unit = getAttribute(POINT_ALT_UNIT_ATTR, tag.attributes);
+        p.geodetic_datum = getAttribute(POINT_GEODETIC_DATUM_ATTR, tag.attributes);
+        var parent = _tagStack.get(1);
+        if (parent == DISTRIBUTION) {
+            addToArrayInCurrentObject('points', p);
+        }
+        _objectStack.push(p);
+    }
+
     function newProperty(tag) {
         var prop = {};
         prop.ref = getAttribute(PROPERTY_REF_ATTR, tag.attributes);
@@ -364,7 +380,6 @@
         addToArrayInCurrentObject('properties', prop);
         _objectStack.push(prop);
     }
-
 
     function newProteinDomain(tag) {
         var pd = {};
@@ -484,14 +499,6 @@
         }
     }
 
-    function inProteinDomain(text) {
-        getCurrentObject().name = text;
-    }
-
-    function inId(text) {
-        getCurrentObject().value = text;
-    }
-
     function inEvents(text) {
         if (getCurrentTag() == EVENTS_TYPE) {
             getCurrentObject().type = text;
@@ -503,18 +510,36 @@
             getCurrentObject().speciations = parseIntNumber(text);
         }
         else if (getCurrentTag() == EVENTS_LOSSES) {
-            getCurrentObject().losses =parseIntNumber( text);
+            getCurrentObject().losses = parseIntNumber(text);
         }
+    }
+
+    function inId(text) {
+        getCurrentObject().value = text;
     }
 
     function inMolecularSequence(text) {
         getCurrentObject().value = text;
     }
 
-    function inReference(text) {
-        if (getCurrentTag() == REFERENCE_DESC) {
-            getCurrentObject().desc = text;
+    function inPoint(text) {
+        if (getCurrentTag() == POINT_LAT) {
+            getCurrentObject().lat = text;
         }
+        else if (getCurrentTag() == POINT_LONG) {
+            getCurrentObject().long = text;
+        }
+        else if (getCurrentTag() == POINT_ALT) {
+            getCurrentObject().alt = text;
+        }
+    }
+
+    function inProperty(text) {
+        getCurrentObject().value = text;
+    }
+
+    function inProteinDomain(text) {
+        getCurrentObject().name = text;
     }
 
     function inPhylogeny(text) {
@@ -526,6 +551,12 @@
         }
         else if (getCurrentTag() == PHYLOGENY_DATE) {
             getCurrentObject().date = text;
+        }
+    }
+
+    function inReference(text) {
+        if (getCurrentTag() == REFERENCE_DESC) {
+            getCurrentObject().desc = text;
         }
     }
 
@@ -565,10 +596,6 @@
         }
     }
 
-    function inProperty(text) {
-        getCurrentObject().value = text;
-    }
-
     function inUri(text) {
         getCurrentObject().value = text;
     }
@@ -605,35 +632,38 @@
             case DISTRIBUTION:
                 newDistribution(tag);
                 break;
-            case ID:
-                newId(tag);
+            case DOMAIN_ARCHITECTURE:
+                newDomainArchitecture(tag);
                 break;
             case EVENTS:
                 newEvents();
                 break;
+            case ID:
+                newId(tag);
+                break;
             case MOLSEQ:
                 newMolecularSequence(tag);
                 break;
-            case REFERENCE:
-                newReference(tag);
-                break;
-            case DOMAIN_ARCHITECTURE:
-                newDomainArchitecture(tag);
+            case POINT:
+                newPoint(tag);
                 break;
             case PROTEINDOMAIN:
                 newProteinDomain(tag);
-                break;
-            case SEQUENCE:
-                newSequence(tag);
-                break;
-            case TAXONOMY:
-                newTaxonomy(tag);
                 break;
             case PHYLOGENY:
                 newPhylogeny(tag);
                 break;
             case PROPERTY:
                 newProperty(tag);
+                break;
+            case REFERENCE:
+                newReference(tag);
+                break;
+            case SEQUENCE:
+                newSequence(tag);
+                break;
+            case TAXONOMY:
+                newTaxonomy(tag);
                 break;
             case URI:
                 newUri(tag);
@@ -665,6 +695,7 @@
             || tag == PROTEINDOMAIN
             || tag == SEQUENCE
             || tag == PROPERTY
+            || tag == POINT
             || tag == URI) {
             _tagStack.pop();
             _objectStack.pop();
@@ -705,6 +736,9 @@
         }
         else if (parentTag == PHYLOGENY) {
             inPhylogeny(text);
+        }
+        else if (parentTag == POINT) {
+            inPoint(text);
         }
         else if (parentTag == SEQUENCE) {
             inSequence(text);
@@ -814,19 +848,18 @@
         obj.push(value);
     }
 
-
     function parseFloatNumber(text) {
         var f = parseFloat(text);
-        if ( isNaN( f ) ) {
-            throw new PhyloXmlError( "could not parse floating point number from '" + text + "'");
+        if (isNaN(f)) {
+            throw new PhyloXmlError("could not parse floating point number from '" + text + "'");
         }
         return f;
     }
 
     function parseIntNumber(text) {
         var i = parseInt(text);
-        if ( isNaN( i ) ) {
-            throw new PhyloXmlError( "could not parse integer number from '" + text + "'");
+        if (isNaN(i)) {
+            throw new PhyloXmlError("could not parse integer number from '" + text + "'");
         }
         return i;
     }
@@ -851,7 +884,7 @@
     }
 
     function phyloxmlOnClosetagSanityCheck() {
-        if ( !(_cladeStack.isEmpty() && _objectStack.isEmpty() ) ) {
+        if (!(_cladeStack.isEmpty() && _objectStack.isEmpty() )) {
             throw new PhyloXmlError('severe phyloXML format error')
         }
     }
@@ -869,7 +902,7 @@
         this._stack = [];
         this.pop = function () {
             var p = this._stack.pop();
-            if ( p == undefined ) {
+            if (p == undefined) {
                 throw new Error('severe phyloXML format error')
             }
             return p;
@@ -898,8 +931,8 @@
         this.name = 'phyloXmlError';
         this.message = message || 'phyloXML format error';
     }
-    PhyloXmlError.prototype = Object.create(Error.prototype);
 
+    PhyloXmlError.prototype = Object.create(Error.prototype);
 
     // --------------------------------------------------------------
     // Main functions
@@ -947,7 +980,6 @@
         sax_parser.write(source).close();
         return _phylogenies;
     };
-
 
     // --------------------------------------------------------------
     // For exporting

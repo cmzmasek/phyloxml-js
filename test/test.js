@@ -27,26 +27,24 @@ var phyloxml_parser = require('../phyloxml_parser');
 
 var t1 = require('path').join(__dirname, "./data/phyloxml_test_1.xml");
 
-console.log( "Accession          : " + ( testAccession() === true? "pass" : "FAIL" ) );
-console.log( "Annotation         : " + ( testAnnotation()=== true ? "pass" : "FAIL" ) );
-console.log( "Branch Color       : " + ( testBranchColor()=== true ? "pass" : "FAIL" ) );
-console.log( "Confidence         : " + ( testConfidence() === true? "pass" : "FAIL" ) );
-console.log( "Cross-References   : " + ( testCrossReferences() === true ? "pass" : "FAIL" ) );
-console.log( "Date               : " + ( testDate()=== true ? "pass" : "FAIL" ) );
-console.log( "Distribution       : " + ( testDistribution() === true ? "pass" : "FAIL" ) );
-console.log( "Domain Architecture: " + ( testDomainArchitecture()=== true? "pass" : "FAIL" ) );
-console.log( "Events             : " + ( testEvents()=== true? "pass" : "FAIL" ) );
-console.log( "Id                 : " + ( testId()=== true? "pass" : "FAIL" ) );
-console.log( "Property           : " + ( testProperty()=== true ? "pass" : "FAIL" ) );
-console.log( "Reference          : " + ( testReference()=== true ? "pass" : "FAIL" ) );
-console.log( "Sequence           : " + ( testSequence()=== true ? "pass" : "FAIL" ) );
-console.log( "Taxonomy           : " + ( testTaxonomy()=== true ? "pass" : "FAIL" ) );
-console.log( "URI                : " + ( testUri() === true? "pass" : "FAIL" ) );
-console.log( "Clade              : " + ( testClade()=== true ? "pass" : "FAIL" ) );
-console.log( "Phylogeny          : " + ( testPhylogeny()=== true ? "pass" : "FAIL" ) );
-console.log( "UTF8               : " + ( testUTF8()=== true? "pass" : "FAIL" ) );
-
-
+console.log("Accession          : " + ( testAccession() === true ? "pass" : "FAIL" ));
+console.log("Annotation         : " + ( testAnnotation() === true ? "pass" : "FAIL" ));
+console.log("Branch Color       : " + ( testBranchColor() === true ? "pass" : "FAIL" ));
+console.log("Confidence         : " + ( testConfidence() === true ? "pass" : "FAIL" ));
+console.log("Cross-References   : " + ( testCrossReferences() === true ? "pass" : "FAIL" ));
+console.log("Date               : " + ( testDate() === true ? "pass" : "FAIL" ));
+console.log("Distribution       : " + ( testDistribution() === true ? "pass" : "FAIL" ));
+console.log("Domain Architecture: " + ( testDomainArchitecture() === true ? "pass" : "FAIL" ));
+console.log("Events             : " + ( testEvents() === true ? "pass" : "FAIL" ));
+console.log("Id                 : " + ( testId() === true ? "pass" : "FAIL" ));
+console.log("Property           : " + ( testProperty() === true ? "pass" : "FAIL" ));
+console.log("Reference          : " + ( testReference() === true ? "pass" : "FAIL" ));
+console.log("Sequence           : " + ( testSequence() === true ? "pass" : "FAIL" ));
+console.log("Taxonomy           : " + ( testTaxonomy() === true ? "pass" : "FAIL" ));
+console.log("URI                : " + ( testUri() === true ? "pass" : "FAIL" ));
+console.log("Clade              : " + ( testClade() === true ? "pass" : "FAIL" ));
+console.log("Phylogeny          : " + ( testPhylogeny() === true ? "pass" : "FAIL" ));
+console.log("UTF8               : " + ( testUTF8() === true ? "pass" : "FAIL" ));
 
 
 function readPhyloXmlFromFile(fileName) {
@@ -57,11 +55,11 @@ function readPhyloXmlFromFile(fileName) {
 
 function findByName(clade, name) {
     var found_clades = [];
-    var findByName = function(clade) {
-        if ( clade.name == name ) {
+    var findByName = function (clade) {
+        if (clade.name == name) {
             found_clades.push(clade);
         }
-    }
+    };
     visitDfs(clade, findByName);
     return found_clades;
 }
@@ -70,8 +68,8 @@ function visitDfs(clade, func) {
     if (func) {
         func(clade);
     }
-    if (clade.clades ) {
-        clade.clades.forEach(function (child) {
+    if (clade.children) {
+        clade.children.forEach(function (child) {
             visitDfs(child, func);
         })
     }
@@ -80,20 +78,15 @@ function visitDfs(clade, func) {
 function testAccession() {
     var phys = readPhyloXmlFromFile(t1);
     var phy = phys[0];
-
-    var x = function(clade) {
-        console.log( clade.name);
-    };
-
     var root = findByName(phy, "root node")[0];
     var acc = root.sequences[0].accession;
-    if( acc.value !== "Q9BZR8" ) {
+    if (acc.value !== "Q9BZR8") {
         return false;
     }
-    if( acc.source !== "UniProtKB" ) {
+    if (acc.source !== "UniProtKB") {
         return false;
     }
-    if( acc.comment !== "outdated" ) {
+    if (acc.comment !== "outdated") {
         return false;
     }
     return true;
@@ -109,92 +102,92 @@ function testAnnotation() {
 
     var annotations = seq.annotations;
 
-    if(annotations.length != 3 ) {
+    if (annotations.length != 3) {
         return false;
     }
-    if( annotations[0].desc!=="intracellular organelle" ) {
+    if (annotations[0].desc !== "intracellular organelle") {
         return false;
     }
-    if( annotations[1].ref!=="GO:0005829" ) {
+    if (annotations[1].ref !== "GO:0005829") {
         return false;
     }
-    if( annotations[2].ref!=="GO:0006915" ) {
+    if (annotations[2].ref !== "GO:0006915") {
         return false;
     }
-    if( annotations[2].source!=="UniProtKB" ) {
+    if (annotations[2].source !== "UniProtKB") {
         return false;
     }
-    if( annotations[2].evidence!=="experimental" ) {
+    if (annotations[2].evidence !== "experimental") {
         return false;
     }
-    if( annotations[2].type!=="function" ) {
+    if (annotations[2].type !== "function") {
         return false;
     }
-    if( annotations[2].desc!=="apoptosis" ) {
+    if (annotations[2].desc !== "apoptosis") {
         return false;
     }
 
     var uris = annotations[2].uris;
-    if(uris.length != 2 ) {
+    if (uris.length != 2) {
         return false;
     }
-    if(uris[0].type !== "source" ) {
+    if (uris[0].type !== "source") {
         return false;
     }
-    if(uris[0].desc !== "google" ) {
+    if (uris[0].desc !== "google") {
         return false;
     }
-    if(uris[0].value !== "http://www.google.com" ) {
+    if (uris[0].value !== "http://www.google.com") {
         return false;
     }
-    if(uris[1].type !== "source2" ) {
+    if (uris[1].type !== "source2") {
         return false;
     }
-    if(uris[1].desc !== "bing" ) {
+    if (uris[1].desc !== "bing") {
         return false;
     }
-    if(uris[1].value !== "http://www.bing.com" ) {
+    if (uris[1].value !== "http://www.bing.com") {
         return false;
     }
     var confidence = annotations[2].confidence;
-    if(confidence.value !== 1 ) {
+    if (confidence.value !== 1) {
         return false;
     }
-    if(confidence.type !== "ml" ) {
+    if (confidence.type !== "ml") {
         return false;
     }
-    if(confidence.stddev !== 0.3 ) {
+    if (confidence.stddev !== 0.3) {
         return false;
     }
     var properties = annotations[2].properties;
-    if(properties.length != 2 ) {
+    if (properties.length != 2) {
         return false;
     }
-    if(properties[0].datatype !== "xsd:double" ) {
+    if (properties[0].datatype !== "xsd:double") {
         return false;
     }
-    if(properties[0].applies_to !== "annotation" ) {
+    if (properties[0].applies_to !== "annotation") {
         return false;
     }
-    if(properties[0].ref !== "AFFY:expression" ) {
+    if (properties[0].ref !== "AFFY:expression") {
         return false;
     }
-    if(properties[0].unit !== "AFFY:x" ) {
+    if (properties[0].unit !== "AFFY:x") {
         return false;
     }
-    if(properties[0].value !== "0.2" ) {
+    if (properties[0].value !== "0.2") {
         return false;
     }
-    if(properties[1].datatype !== "xsd:string" ) {
+    if (properties[1].datatype !== "xsd:string") {
         return false;
     }
-    if(properties[1].applies_to !== "annotation" ) {
+    if (properties[1].applies_to !== "annotation") {
         return false;
     }
-    if(properties[1].ref !== "MED:disease" ) {
+    if (properties[1].ref !== "MED:disease") {
         return false;
     }
-    if(properties[1].value !== "lymphoma" ) {
+    if (properties[1].value !== "lymphoma") {
         return false;
     }
     return true;
@@ -203,17 +196,17 @@ function testAnnotation() {
 function testBranchColor() {
     var phys = readPhyloXmlFromFile(t1);
     var root = findByName(phys[0], "root node")[0];
-    var col=root.color;
-    if(col.red !== 2 ) {
+    var col = root.color;
+    if (col.red !== 2) {
         return false;
     }
-    if(col.green !== 22 ) {
+    if (col.green !== 22) {
         return false;
     }
-    if(col.blue !== 33 ) {
+    if (col.blue !== 33) {
         return false;
     }
-    if(col.alpha !== 123 ) {
+    if (col.alpha !== 123) {
         return false;
     }
     return true;
@@ -225,112 +218,115 @@ function testClade() {
 
     var root = findByName(phy, "root node")[0];
 
-    if( root.branch_length !== 0.1 ) {
+    if (root.branch_length !== 0.1) {
         return false;
     }
-    if( root.id_source !== "id111" ) {
+    if (root.id_source !== "id111") {
         return false;
     }
-    if( root.collapse !== true ) {
+    if (root.collapse !== true) {
         return false;
     }
-    if( root.name !== "root node" ) {
+    if (root.name !== "root node") {
         return false;
     }
     if (root.confidences.length != 3) {
         return false;
     }
-    if( root.confidences[0].type !== "bootstrap" ) {
+    if (root.confidences[0].type !== "bootstrap") {
         return false;
     }
-    if( root.confidences[0].value !== 90 ) {
+    if (root.confidences[0].value !== 90) {
         return false;
     }
-    if( root.confidences[1].type !== "ml" ) {
+    if (root.confidences[1].type !== "ml") {
         return false;
     }
-    if( root.confidences[1].value !== 1e-3 ) {
+    if (root.confidences[1].value !== 1e-3) {
         return false;
     }
-    if( root.confidences[2].type !== "decay" ) {
+    if (root.confidences[2].type !== "decay") {
         return false;
     }
-    if( root.confidences[2].value !== 2 ) {
+    if (root.confidences[2].value !== 2) {
         return false;
     }
-    if( root.width !== 10.5 ) {
+    if (root.width !== 10.5) {
         return false;
     }
-    if( !root.color  ) {
+    if (!root.color) {
         return false;
     }
-    if( root.color.red !== 2 ) {
+    if (root.color.red !== 2) {
         return false;
     }
-    if( root.taxonomies.length !== 2 ) {
+    if (root.taxonomies.length !== 2) {
         return false;
     }
-    if( root.sequences.length !== 2 ) {
+    if (root.sequences.length !== 2) {
         return false;
     }
-    if( !root.events ) {
+    if (!root.events) {
         return false;
     }
-    if( root.distributions.length != 2 ) {
+    if (root.distributions.length != 2) {
         return false;
     }
-    if( !root.date ) {
+    if (!root.date) {
         return false;
     }
-    if( root.properties.length !== 2 ) {
+    if (root.properties.length !== 2) {
         return false;
     }
-    if( root.properties[0].value !== "2" ) {
+    if (root.properties[0].value !== "2") {
         return false;
     }
-    if( root.properties[1].value !== "33" ) {
+    if (root.properties[1].value !== "33") {
         return false;
     }
-    if( root.clades.length !== 2 ) {
+    if (root.children.length !== 2) {
         return false;
     }
 
     var node_a = findByName(phy, "node a")[0];
-    if( node_a.branch_length !== 0.2 ) {
+    if (node_a.branch_length !== 0.2) {
         return false;
     }
-    if( node_a.taxonomies[0].code !== "CAEEL" ) {
+    if (node_a.taxonomies[0].code !== "CAEEL") {
         return false;
     }
-    if( node_a.clades ) {
+    if (node_a.children) {
         return false;
     }
     var node_b = findByName(phy, "node b")[0];
-    if( !node_b ) {
+    if (!node_b) {
         return false;
     }
-    if( node_b.clades.length != 3 ) {
+    if (node_b.children.length != 3) {
         return false;
     }
     var node_ba = findByName(phy, "node ba")[0];
-    if( !node_ba ) {
+    if (!node_ba) {
         return false;
     }
-    if( node_ba.clades ) {
+    if (node_ba.children) {
         return false;
     }
     var node_bb = findByName(phy, "node bb")[0];
-    if( node_bb.taxonomies[0].code !== "NEMVE" ) {
+    if (node_bb.collapse !== false) {
         return false;
     }
-    if( node_bb.clades ) {
+    if (node_bb.taxonomies[0].code !== "NEMVE") {
+        return false;
+    }
+    if (node_bb.children) {
         return false;
     }
     var node_bc = findByName(phy, "node bc")[0];
-    if( node_bc.sequences[0].name !== "bc seq" ) {
+    if (node_bc.sequences[0].name !== "bc seq") {
         return false;
     }
-    if( node_bc.clades ) {
+    if (node_bc.children) {
         return false;
     }
     return true;
@@ -342,28 +338,28 @@ function testConfidence() {
 
     var root = findByName(phy, "root node")[0];
 
-    if(root.confidences.length != 3 ) {
+    if (root.confidences.length != 3) {
         return false;
     }
-    if(root.confidences[0].type !== "bootstrap" ) {
+    if (root.confidences[0].type !== "bootstrap") {
         return false;
     }
-    if(root.confidences[0].value !== 90 ) {
+    if (root.confidences[0].value !== 90) {
         return false;
     }
-    if(root.confidences[1].type !== "ml" ) {
+    if (root.confidences[1].type !== "ml") {
         return false;
     }
-    if(root.confidences[1].value !== 1e-3 ) {
+    if (root.confidences[1].value !== 1e-3) {
         return false;
     }
-    if(root.confidences[1].stddev !== 1.1e-10 ) {
+    if (root.confidences[1].stddev !== 1.1e-10) {
         return false;
     }
-    if(root.confidences[2].type !== "decay" ) {
+    if (root.confidences[2].type !== "decay") {
         return false;
     }
-    if(root.confidences[2].value !== 2 ) {
+    if (root.confidences[2].value !== 2) {
         return false;
     }
     return true;
@@ -377,34 +373,34 @@ function testCrossReferences() {
     var root = findByName(phy, "root node")[0];
 
     var xrefs = root.sequences[0].cross_references;
-    if(  xrefs.length != 4 ) {
+    if (xrefs.length != 4) {
         return false;
     }
-    if( xrefs[0].value!=="383" ) {
+    if (xrefs[0].value !== "383") {
         return false;
     }
-    if(xrefs[0].source!=="UNIPROTKB" ) {
+    if (xrefs[0].source !== "UNIPROTKB") {
         return false;
     }
-    if( xrefs[1].value!=="1G5M" ) {
+    if (xrefs[1].value !== "1G5M") {
         return false;
     }
-    if( xrefs[1].source!=="PDB" ) {
+    if (xrefs[1].source !== "PDB") {
         return false;
     }
-    if( xrefs[2].value!=="hsa:596" ) {
+    if (xrefs[2].value !== "hsa:596") {
         return false;
     }
-    if( xrefs[2].source!="KEGG" ) {
+    if (xrefs[2].source != "KEGG") {
         return false;
     }
-    if(xrefs[3].value!=="2G5M" ) {
+    if (xrefs[3].value !== "2G5M") {
         return false;
     }
-    if( xrefs[3].source!=="PDB" ) {
+    if (xrefs[3].source !== "PDB") {
         return false;
     }
-    if( xrefs[3].comment!=="?" ) {
+    if (xrefs[3].comment !== "?") {
         return false;
     }
     return true;
@@ -414,7 +410,7 @@ function testDate() {
     var phys = readPhyloXmlFromFile(t1);
     var phy = phys[0];
     var node_ba = findByName(phy, "node ba")[0];
-    var date_ba=node_ba.date;
+    var date_ba = node_ba.date;
     if (date_ba.unit !== "mya") {
         return false;
     }
@@ -431,12 +427,12 @@ function testDate() {
         return false;
     }
     var node_bb = findByName(phy, "node bb")[0];
-    var date_bb=node_bb.date;
+    var date_bb = node_bb.date;
     if (date_bb.desc !== "Triassic") {
         return false;
     }
     var node_bc = findByName(phy, "node bc")[0];
-    var date_bc=node_bc.date;
+    var date_bc = node_bc.date;
     if (date_bc.value !== 433) {
         return false;
     }
@@ -447,22 +443,48 @@ function testDistribution() {
     var phys = readPhyloXmlFromFile(t1);
     var phy = phys[0];
     var root = findByName(phy, "root node")[0];
-    var root_dist=root.distributions;
-    if(root_dist.length != 2 ) {
+    var root_dist = root.distributions;
+    if (root_dist.length != 2) {
         return false;
     }
-    if(root_dist[0].desc !== "irgendwo" ) {
+    if (root_dist[0].desc !== "irgendwo") {
         return false;
     }
-    if(root_dist[1].desc !== "anderswo" ) {
+    if (root_dist[1].desc !== "anderswo") {
+        return false;
+    }
+    if (!root_dist[0].points) {
+        return false;
+    }
+    if (root_dist[0].points.length != 2) {
+        return false;
+    }
+    var p0 = root_dist[0].points[0];
+    var p1 = root_dist[0].points[1];
+    if (p0.geodetic_datum !== "WGS84") {
+        return false;
+    }
+    if (p0.alt_unit !== "m") {
+        return false;
+    }
+    if (p0.lat !== "35.9296730123456789") {
+        return false;
+    }
+    if (p0.long !== "-78.9482370123456789") {
+        return false;
+    }
+    if (p0.alt !== "1303") {
+        return false;
+    }
+    if (p1.lat !== "129.549495485834893") {
         return false;
     }
     var node_ba = findByName(phy, "node ba")[0];
-    var ba_dist=node_ba.distributions;
-    if(ba_dist.length != 1 ) {
+    var ba_dist = node_ba.distributions;
+    if (ba_dist.length != 1) {
         return false;
     }
-    if(ba_dist[0].desc !== "Africa" ) {
+    if (ba_dist[0].desc !== "Africa") {
         return false;
     }
     return true;
@@ -472,39 +494,39 @@ function testDomainArchitecture() {
     var phys = readPhyloXmlFromFile(t1);
     var phy = phys[0];
     var nodebc = findByName(phy, "node bc")[0];
-    var da=nodebc.sequences[0].domain_architecture;
-    if(!da) {
+    var da = nodebc.sequences[0].domain_architecture;
+    if (!da) {
         return false;
     }
-    if(da.length !== 124) {
+    if (da.length !== 124) {
         return false;
     }
-    if(da.domains[0].from !== 120) {
+    if (da.domains[0].from !== 120) {
         return false;
     }
-    if(da.domains[0].to !== 130) {
+    if (da.domains[0].to !== 130) {
         return false;
     }
-    if(da.domains[0].confidence !== 0.9) {
+    if (da.domains[0].confidence !== 0.9) {
         return false;
     }
-    if(da.domains[0].name !== "A") {
+    if (da.domains[0].name !== "A") {
         return false;
     }
     //
-    if(da.domains[1].from !== 21) {
+    if (da.domains[1].from !== 21) {
         return false;
     }
-    if(da.domains[1].to !== 44) {
+    if (da.domains[1].to !== 44) {
         return false;
     }
-    if(da.domains[1].confidence !== 0) {
+    if (da.domains[1].confidence !== 0) {
         return false;
     }
-    if(da.domains[1].id !== "pfam") {
+    if (da.domains[1].id !== "pfam") {
         return false;
     }
-    if(da.domains[1].name !== "B") {
+    if (da.domains[1].name !== "B") {
         return false;
     }
     return true;
@@ -514,44 +536,44 @@ function testEvents() {
     var phys = readPhyloXmlFromFile(t1);
     var phy = phys[0];
     var root = findByName(phy, "root node")[0];
-    var events=root.events;
-    if(!events) {
+    var events = root.events;
+    if (!events) {
         return false;
     }
-    if(events.type !== "mixed") {
+    if (events.type !== "mixed") {
         return false;
     }
-    if(events.duplications !== 1) {
+    if (events.duplications !== 1) {
         return false;
     }
-    if(events.confidence.type!=="bs") {
+    if (events.confidence.type !== "bs") {
         return false;
     }
-    if(events.confidence.value!==99) {
+    if (events.confidence.value !== 99) {
         return false;
     }
 
     var a = findByName(phy, "node a")[0];
-    events=a.events;
-    if(!events) {
+    events = a.events;
+    if (!events) {
         return false;
     }
-    if(events.type !== "other") {
+    if (events.type !== "other") {
         return false;
     }
-    if(events.duplications !== 58) {
+    if (events.duplications !== 58) {
         return false;
     }
-    if(events.speciations !== 59403) {
+    if (events.speciations !== 59403) {
         return false;
     }
-    if(events.losses !== 58485) {
+    if (events.losses !== 58485) {
         return false;
     }
-    if(events.confidence.type!=="p") {
+    if (events.confidence.type !== "p") {
         return false;
     }
-    if(events.confidence.value!==0.9901) {
+    if (events.confidence.value !== 0.9901) {
         return false;
     }
     return true;
@@ -610,20 +632,20 @@ function testReference() {
     var phy = phys[0];
     var root = findByName(phy, "root node")[0];
 
-    var refs=root.references;
-    if(!refs) {
+    var refs = root.references;
+    if (!refs) {
         return false;
     }
-    if(refs.length != 2) {
+    if (refs.length != 2) {
         return false;
     }
-    if(refs[0].doi !== "10.1038/387489a0") {
+    if (refs[0].doi !== "10.1038/387489a0") {
         return false;
     }
-    if(!refs[0].desc.includes("Aguinaldo")) {
+    if (!refs[0].desc.includes("Aguinaldo")) {
         return false;
     }
-    if(refs[1].doi !== "10.1036/59494") {
+    if (refs[1].doi !== "10.1036/59494") {
         return false;
     }
     return true;
@@ -635,61 +657,61 @@ function testSequence() {
 
     var root = findByName(phy, "root node")[0];
 
-    if(root.sequences.length != 2 ) {
+    if (root.sequences.length != 2) {
         return false;
     }
-    if(root.sequences[1].symbol !== "BCL2" ) {
+    if (root.sequences[1].symbol !== "BCL2") {
         return false;
     }
     var seq = root.sequences[0];
-    if(seq.type !== "protein" ) {
+    if (seq.type !== "protein") {
         return false;
     }
-    if(seq.id_source !== "idsource" ) {
+    if (seq.id_source !== "idsource") {
         return false;
     }
-    if(seq.symbol !== "BCL2L14" ) {
+    if (seq.symbol !== "BCL2L14") {
         return false;
     }
-    if(seq.accession.value !== "Q9BZR8" ) {
+    if (seq.accession.value !== "Q9BZR8") {
         return false;
     }
-    if(seq.name !== "Apoptosis facilitator Bcl-2-like 14 protein" ) {
+    if (seq.name !== "Apoptosis facilitator Bcl-2-like 14 protein") {
         return false;
     }
-    if(seq.gene_name !== "bcl2l14" ) {
+    if (seq.gene_name !== "bcl2l14") {
         return false;
     }
-    if(seq.location !== "12p13-p12" ) {
+    if (seq.location !== "12p13-p12") {
         return false;
     }
-    if(!seq.mol_seq) {
+    if (!seq.mol_seq) {
         return false;
     }
-    if( seq.mol_seq.is_aligned !== true) {
+    if (seq.mol_seq.is_aligned !== true) {
         return false;
     }
-    if( seq.mol_seq.value !== "MCSTSGCDLEEIPLDDDDLNTIEFKILAYY") {
+    if (seq.mol_seq.value !== "MCSTSGCDLEEIPLDDDDLNTIEFKILAYY") {
         return false;
     }
     var xrefs = root.sequences[0].cross_references;
-    if(  xrefs.length != 4 ) {
+    if (xrefs.length != 4) {
         return false;
     }
     var annotations = seq.annotations;
-    if(annotations.length != 3 ) {
+    if (annotations.length != 3) {
         return false;
     }
     var uris = annotations[2].uris;
-    if(uris.length != 2 ) {
+    if (uris.length != 2) {
         return false;
     }
     var confidence = annotations[2].confidence;
-    if(confidence.value !== 1 ) {
+    if (confidence.value !== 1) {
         return false;
     }
     var properties = annotations[2].properties;
-    if(properties.length != 2 ) {
+    if (properties.length != 2) {
         return false;
     }
     return true;
@@ -843,7 +865,7 @@ function testPhylogeny() {
     if (phy.confidences[1].value !== 0.955) {
         return false;
     }
-    if (phy.clades.length !== 1) {
+    if (phy.children.length !== 1) {
         return false;
     }
 
