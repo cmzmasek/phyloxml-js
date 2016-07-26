@@ -72,138 +72,138 @@
     // --------------------------------------------------------------
 
     // Accession
-    const ACCESSION = 'accession';
-    const ACCESSION_SOURCE_ATTR = 'source';
-    const ACCESSION_COMMENT_ATTR = 'comment';
+    var ACCESSION = 'accession';
+    var ACCESSION_SOURCE_ATTR = 'source';
+    var ACCESSION_COMMENT_ATTR = 'comment';
 
     // Annotation
-    const ANNOTATION = 'annotation';
-    const ANNOTATION_REF_ATTR = 'ref';
-    const ANNOTATION_SOURCE_ATTR = 'source';
-    const ANNOTATION_EVIDENCE_ATTR = 'evidence';
-    const ANNOTATION_TYPE_ATTR = 'type';
-    const ANNOTATION_DESC = 'desc';
+    var ANNOTATION = 'annotation';
+    var ANNOTATION_REF_ATTR = 'ref';
+    var ANNOTATION_SOURCE_ATTR = 'source';
+    var ANNOTATION_EVIDENCE_ATTR = 'evidence';
+    var ANNOTATION_TYPE_ATTR = 'type';
+    var ANNOTATION_DESC = 'desc';
 
     // Clade
-    const CLADE = 'clade';
-    const CLADE_BRANCH_LENGTH = 'branch_length';
-    const CLADE_ID_SOURCE_ATTR = 'id_source';
-    const CLADE_COLLAPSE_ATTR = 'collapse';
-    const CLADE_NAME = 'name';
-    const CLADE_WIDTH = 'width';
+    var CLADE = 'clade';
+    var CLADE_BRANCH_LENGTH = 'branch_length';
+    var CLADE_ID_SOURCE_ATTR = 'id_source';
+    var CLADE_COLLAPSE_ATTR = 'collapse';
+    var CLADE_NAME = 'name';
+    var CLADE_WIDTH = 'width';
 
     // Color
-    const COLOR = 'color';
-    const COLOR_RED = 'red';
-    const COLOR_GREEN = 'green';
-    const COLOR_BLUE = 'blue';
-    const COLOR_ALPHA = 'alpha';
+    var COLOR = 'color';
+    var COLOR_RED = 'red';
+    var COLOR_GREEN = 'green';
+    var COLOR_BLUE = 'blue';
+    var COLOR_ALPHA = 'alpha';
 
     // Confidence
-    const CONFIDENCE = 'confidence';
-    const CONFIDENCE_TYPE_ATTR = 'type';
-    const CONFIDENCE_STDDEV_ATTR = 'stddev';
+    var CONFIDENCE = 'confidence';
+    var CONFIDENCE_TYPE_ATTR = 'type';
+    var CONFIDENCE_STDDEV_ATTR = 'stddev';
 
     // Cross References
-    const CROSS_REFERENCES = 'cross_references';
+    var CROSS_REFERENCES = 'cross_references';
 
     // Date
-    const DATE = 'date';
-    const DATE_UNIT_ATTR = 'unit';
-    const DATE_DESC = 'desc';
-    const DATE_VALUE = 'value';
-    const DATE_MINIMUM = 'minimum';
-    const DATE_MAXIMUM = 'maximum';
+    var DATE = 'date';
+    var DATE_UNIT_ATTR = 'unit';
+    var DATE_DESC = 'desc';
+    var DATE_VALUE = 'value';
+    var DATE_MINIMUM = 'minimum';
+    var DATE_MAXIMUM = 'maximum';
 
     // Distribution
-    const DISTRIBUTION = 'distribution';
-    const DISTRIBUTION_DESC = 'desc';
+    var DISTRIBUTION = 'distribution';
+    var DISTRIBUTION_DESC = 'desc';
 
     // Domain Architecture
-    const DOMAIN_ARCHITECTURE = 'domain_architecture';
-    const DOMAIN_ARCHITECTURE_LENGTH_ATTR = 'length';
+    var DOMAIN_ARCHITECTURE = 'domain_architecture';
+    var DOMAIN_ARCHITECTURE_LENGTH_ATTR = 'length';
 
     // Events
-    const EVENTS = 'events';
-    const EVENTS_TYPE = 'type';
-    const EVENTS_DUPLICATIONS = 'duplications';
-    const EVENTS_SPECIATIONs = 'speciations';
-    const EVENTS_LOSSES = 'losses';
+    var EVENTS = 'events';
+    var EVENTS_TYPE = 'type';
+    var EVENTS_DUPLICATIONS = 'duplications';
+    var EVENTS_SPECIATIONs = 'speciations';
+    var EVENTS_LOSSES = 'losses';
 
     // Id
-    const ID = 'id';
-    const ID_PROVIDER_ATTR = 'provider';
+    var ID = 'id';
+    var ID_PROVIDER_ATTR = 'provider';
 
     // Mol Seq
-    const MOLSEQ = 'mol_seq';
-    const MOLSEQ_IS_ALIGNED_ATTR = 'is_aligned';
+    var MOLSEQ = 'mol_seq';
+    var MOLSEQ_IS_ALIGNED_ATTR = 'is_aligned';
 
     // Phylogeny
-    const PHYLOGENY = 'phylogeny';
+    var PHYLOGENY = 'phylogeny';
 
     // Phyloxml
-    const PHYLOXML = 'phyloxml';
+    var PHYLOXML = 'phyloxml';
 
     // Point
-    const POINT = 'point';
-    const POINT_ALT_UNIT_ATTR = 'alt_unit';
-    const POINT_GEODETIC_DATUM_ATTR = 'geodetic_datum';
-    const POINT_LAT = 'lat';
-    const POINT_LONG = 'long';
-    const POINT_ALT = 'alt';
+    var POINT = 'point';
+    var POINT_ALT_UNIT_ATTR = 'alt_unit';
+    var POINT_GEODETIC_DATUM_ATTR = 'geodetic_datum';
+    var POINT_LAT = 'lat';
+    var POINT_LONG = 'long';
+    var POINT_ALT = 'alt';
 
     // Property
-    const PROPERTY = 'property';
-    const PROPERTY_REF_ATTR = 'ref';
-    const PROPERTY_ID_REF_ATTR = 'id_ref';
-    const PROPERTY_UNIT_ATTR = 'unit';
-    const PROPERTY_DATATYPE_ATTR = 'datatype';
-    const PROPERTY_APPLIES_TO_ATTR = 'applies_to';
+    var PROPERTY = 'property';
+    var PROPERTY_REF_ATTR = 'ref';
+    var PROPERTY_ID_REF_ATTR = 'id_ref';
+    var PROPERTY_UNIT_ATTR = 'unit';
+    var PROPERTY_DATATYPE_ATTR = 'datatype';
+    var PROPERTY_APPLIES_TO_ATTR = 'applies_to';
 
     // Protein Domain
-    const PROTEINDOMAIN = 'domain';
-    const PROTEINDOMAIN_FROM_ATTR = 'from';
-    const PROTEINDOMAIN_TO_ATTR = 'to';
-    const PROTEINDOMAIN_CONFIDENCE_ATTR = 'confidence';
-    const PROTEINDOMAIN_ID_ATTR = 'id';
+    var PROTEINDOMAIN = 'domain';
+    var PROTEINDOMAIN_FROM_ATTR = 'from';
+    var PROTEINDOMAIN_TO_ATTR = 'to';
+    var PROTEINDOMAIN_CONFIDENCE_ATTR = 'confidence';
+    var PROTEINDOMAIN_ID_ATTR = 'id';
 
     // Reference
-    const REFERENCE = 'reference';
-    const REFERENCE_DOI_ATTR = 'doi';
-    const REFERENCE_DESC = 'desc';
+    var REFERENCE = 'reference';
+    var REFERENCE_DOI_ATTR = 'doi';
+    var REFERENCE_DESC = 'desc';
 
     // Sequence
-    const SEQUENCE = 'sequence';
-    const SEQUENCE_ID_SOURCE_ATTR = 'id_source';
-    const SEQUENCE_ID_REF_ATTR = 'id_ref';
-    const SEQUENCE_TYPE_ATTR = 'type';
-    const SEQUENCE_SYMBOL = 'symbol';
-    const SEQUENCE_NAME = 'name';
-    const SEQUENCE_GENE_NAME = 'gene_name';
-    const SEQUENCE_LOCATION = 'location';
+    var SEQUENCE = 'sequence';
+    var SEQUENCE_ID_SOURCE_ATTR = 'id_source';
+    var SEQUENCE_ID_REF_ATTR = 'id_ref';
+    var SEQUENCE_TYPE_ATTR = 'type';
+    var SEQUENCE_SYMBOL = 'symbol';
+    var SEQUENCE_NAME = 'name';
+    var SEQUENCE_GENE_NAME = 'gene_name';
+    var SEQUENCE_LOCATION = 'location';
 
     // Taxonomy
-    const TAXONOMY = 'taxonomy';
-    const TAXONOMY_CODE = 'code';
-    const TAXONOMY_SCIENTIFIC_NAME = 'scientific_name';
-    const TAXONOMY_AUTHORITY = 'authority';
-    const TAXONOMY_COMMON_NAME = 'common_name';
-    const TAXONOMY_SYNONYM = 'synonym';
-    const TAXONOMY_RANK = 'rank';
+    var TAXONOMY = 'taxonomy';
+    var TAXONOMY_CODE = 'code';
+    var TAXONOMY_SCIENTIFIC_NAME = 'scientific_name';
+    var TAXONOMY_AUTHORITY = 'authority';
+    var TAXONOMY_COMMON_NAME = 'common_name';
+    var TAXONOMY_SYNONYM = 'synonym';
+    var TAXONOMY_RANK = 'rank';
 
     // Uri
-    const URI = 'uri';
-    const URI_TYPE_ATTR = 'type';
-    const URI_DESC_ATTR = 'desc';
+    var URI = 'uri';
+    var URI_TYPE_ATTR = 'type';
+    var URI_DESC_ATTR = 'desc';
 
     // Phylogeny
-    const PHYLOGENY_ROOTED_ATTR = 'rooted';
-    const PHYLOGENY_REROOTABLE_ATTR = 'rerootable';
-    const PHYLOGENY_BRANCH_LENGTH_UNIT_ATTR = 'branch_length_unit';
-    const PHYLOGENY_TYPE_ATTR = 'type';
-    const PHYLOGENY_NAME = 'name';
-    const PHYLOGENY_DESCRIPTION = 'description';
-    const PHYLOGENY_DATE = 'date';
+    var PHYLOGENY_ROOTED_ATTR = 'rooted';
+    var PHYLOGENY_REROOTABLE_ATTR = 'rerootable';
+    var PHYLOGENY_BRANCH_LENGTH_UNIT_ATTR = 'branch_length_unit';
+    var PHYLOGENY_TYPE_ATTR = 'type';
+    var PHYLOGENY_NAME = 'name';
+    var PHYLOGENY_DESCRIPTION = 'description';
+    var PHYLOGENY_DATE = 'date';
 
     // --------------------------------------------------------------
     // Instance variables
