@@ -26,14 +26,14 @@ if (!d3) {
 
     "use strict";
 
-    const TRANSITION_DURATION = 500;
-    const PHYLOGRAM_DEFAULT = false;
-    const ROOTOFFSET_DEFAULT = 30;
-    const DISPLAY_WIDTH_DEFAULT = 800;
-    const VIEWERHEIGHT_DEFAULT = 600;
-    const RECENTER_AFTER_COLLAPSE_DEFAULT = false;
-    const BRANCH_LENGTH_DIGITS_DEFAULT = 4;
-    const CONFIDENCE_VALUE_DIGITS_DEFAULT = 2;
+    var TRANSITION_DURATION = 500;
+    var PHYLOGRAM_DEFAULT = false;
+    var ROOTOFFSET_DEFAULT = 30;
+    var DISPLAY_WIDTH_DEFAULT = 800;
+    var VIEWERHEIGHT_DEFAULT = 600;
+    var RECENTER_AFTER_COLLAPSE_DEFAULT = false;
+    var BRANCH_LENGTH_DIGITS_DEFAULT = 4;
+    var CONFIDENCE_VALUE_DIGITS_DEFAULT = 2;
 
     // "Instance variables"
     var _root = null;
