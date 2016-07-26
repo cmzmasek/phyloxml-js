@@ -188,6 +188,7 @@ if (!d3) {
             .attr("x", function (d) {
                 return d.children || d._children ? -10 : 10;
             })
+            .style("fill", makeLabelColor)
             .attr("dy", ".35em")
             .attr('class', 'nodeText')
             .attr("text-anchor", function (d) {
@@ -206,7 +207,6 @@ if (!d3) {
                         return 0;
                     }
                 })
-                // .attr("text-anchor", "middle")
                 .attr("dy", "-.25em")
                 .attr('class', 'nodeText')
                 .text(makeBranchLengthLabel);
@@ -250,7 +250,8 @@ if (!d3) {
             });
 
         nodeUpdate.select("text")
-            .style("fill-opacity", 1);
+            .style("fill-opacity", 1)
+
 
         var nodeExit = node.exit().transition()
             .duration(TRANSITION_DURATION)
@@ -307,6 +308,14 @@ if (!d3) {
             d.y0 = d.y;
         });
     }
+
+    var makeLabelColor = function (phynode) {
+        if (phynode.color) {
+            var s = "rgb(" + phynode.color.red + "," + phynode.color.green + "," + phynode.color.blue + ")";
+            return s;
+        }
+        return "black";
+    };
 
     var makeExtNodeLabel = function (phynode) {
         var l = "";
