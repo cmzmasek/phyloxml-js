@@ -122,8 +122,8 @@ if (!d3) {
     }
 
     function click(d) {
-        if (d3.event.defaultPrevented) {
-            return; // click suppressed
+        if (d3.event.defaultPrevented || !d.parent || !d.parent.parent) {
+            return;
         }
         d = toggleChildren(d);
         update(d, _svgGroup);
@@ -180,9 +180,7 @@ if (!d3) {
         nodeEnter.append("circle")
             .attr('class', 'nodeCircle')
             .attr("r", 0);
-        //  .style("fill", function (d) {
-        //       return d._children ? "blue" : "#fff";
-        //   });
+
 
         nodeEnter.append("text")
             .attr("x", function (d) {
@@ -224,23 +222,18 @@ if (!d3) {
                 })
                 .attr("text-anchor", "middle")
                 .attr("dy", ".90em")
-                .attr('class', 'linkText')
+                .attr('class', 'nodeText')
                 .text(makeConfidenceValuesLabel);
         }
 
-        nodeEnter.append("circle")
-            .attr('class', 'ghostCircle')
-            .attr("r", 30)
-            .attr("opacity", 0.2)
-            .style("fill", "red")
-            .attr('pointer-events', 'mouseover');
-
         node.select("circle.nodeCircle")
             .attr("r", function (d) {
-                return ( d._children || d.children ) ? 3 : 0;
+                return ( ( d._children || d.children ) && d.parent ) ? 3 : 0;
             })
+            .style("stroke", makeNodeColor)
+            .style("stroke-width", _options.branchWidthDefault)
             .style("fill", function (d) {
-                return d._children ? "#999" : "#eee";
+                return d._children ? makeNodeColor(d) : _options.backgroundColorDefault;
             });
 
         var nodeUpdate = node.transition()
@@ -251,7 +244,6 @@ if (!d3) {
 
         nodeUpdate.select("text")
             .style("fill-opacity", 1)
-
 
         var nodeExit = node.exit().transition()
             .duration(TRANSITION_DURATION)
@@ -274,6 +266,8 @@ if (!d3) {
 
         link.enter().insert("path", "g")
             .attr("class", "link")
+            .attr("stroke-width", makeBranchWidth)
+            .attr("stroke", makeBranchColor)
             .attr("d", function () {
                 var o = {
                     x: source.x0,
@@ -309,12 +303,36 @@ if (!d3) {
         });
     }
 
+    var makeBranchWidth = function (link) {
+        if (link.target.width) {
+            return link.target.width;
+        }
+        return _options.branchWidthDefault;
+    };
+
+    var makeBranchColor = function (link) {
+        if (link.target.color) {
+            var c = link.target.color;
+            return "rgb(" + c.red + "," + c.green + "," + c.blue + ")";
+        }
+        return _options.branchColorDefault;
+    };
+
+    var makeNodeColor = function (phynode) {
+        if (phynode.color) {
+            var c = phynode.color;
+            console.log(">>>");
+            return "rgb(" + c.red + "," + c.green + "," + c.blue + ")";
+        }
+        return _options.branchColorDefault;
+    };
+
     var makeLabelColor = function (phynode) {
         if (phynode.color) {
-            var s = "rgb(" + phynode.color.red + "," + phynode.color.green + "," + phynode.color.blue + ")";
-            return s;
+            var c = phynode.color;
+            return "rgb(" + c.red + "," + c.green + "," + c.blue + ")";
         }
-        return "black";
+        return _options.labelColorDefault;
     };
 
     var makeExtNodeLabel = function (phynode) {
@@ -479,6 +497,18 @@ if (!d3) {
         }
         if (!_options.showDisributions) {
             _options.showDisributions = false;
+        }
+        if (!_options.branchWidthDefault) {
+            _options.branchWidthDefault = 2;
+        }
+        if (!_options.branchColorDefault) {
+            _options.branchColorDefault = "#aaaaaa";
+        }
+        if (!_options.labelColorDefault) {
+            _options.labelColorDefault = "#202020";
+        }
+        if (!_options.backgroundColorDefault) {
+            _options.backgroundColorDefault = "#f0f0f0";
         }
     }
 
