@@ -92,6 +92,20 @@
     var CLADE_NAME = 'name';
     var CLADE_WIDTH = 'width';
 
+    // Clade Relation
+    var CLADE_RELATION = 'clade_relation';
+    var CLADE_RELATION_DISTANCE_ATTR = 'distance';
+    var CLADE_RELATION_ID_REF_0_ATTR = 'id_ref_0';
+    var CLADE_RELATION_ID_REF_1_ATTR = 'id_ref_1';
+    var CLADE_RELATION_TYPE_ATTR = 'type';
+
+    // Sequence Relation
+    var SEQUENCE_RELATION = 'sequence_relation';
+    var SEQUENCE_RELATION_DISTANCE_ATTR = 'distance';
+    var SEQUENCE_RELATION_ID_REF_0_ATTR = 'id_ref_0';
+    var SEQUENCE_RELATION_ID_REF_1_ATTR = 'id_ref_1';
+    var SEQUENCE_RELATION_TYPE_ATTR = 'type';
+
     // Color
     var COLOR = 'color';
     var COLOR_RED = 'red';
@@ -290,6 +304,26 @@
         _objectStack.push(newClade);
     }
 
+    function newCladeRelation(tag) {
+        var cr = {};
+        cr.distance = getAttributeAsFloat(CLADE_RELATION_DISTANCE_ATTR, tag.attributes);
+        cr.id_ref_0 = getAttribute(CLADE_RELATION_ID_REF_0_ATTR, tag.attributes);
+        cr.id_ref_1 = getAttribute(CLADE_RELATION_ID_REF_1_ATTR, tag.attributes);
+        cr.type = getAttribute(CLADE_RELATION_TYPE_ATTR, tag.attributes);
+        addToArrayInCurrentObject('clade_relations', cr);
+        _objectStack.push(cr);
+    }
+
+    function newSequenceRelation(tag) {
+        var sr = {};
+        sr.distance = getAttributeAsFloat(SEQUENCE_RELATION_DISTANCE_ATTR, tag.attributes);
+        sr.id_ref_0 = getAttribute(SEQUENCE_RELATION_ID_REF_0_ATTR, tag.attributes);
+        sr.id_ref_1 = getAttribute(SEQUENCE_RELATION_ID_REF_1_ATTR, tag.attributes);
+        sr.type = getAttribute(SEQUENCE_RELATION_TYPE_ATTR, tag.attributes);
+        addToArrayInCurrentObject('sequence_relations', sr);
+        _objectStack.push(sr);
+    }
+
     function newConfidence(tag) {
         var conf = {};
         conf.value = null;
@@ -299,7 +333,7 @@
         if (parent == CLADE || parent == PHYLOGENY) {
             addToArrayInCurrentObject('confidences', conf);
         }
-        else if (parent == ANNOTATION || parent == EVENTS) {
+        else if (parent == ANNOTATION || parent == EVENTS || parent == CLADE_RELATION || parent == SEQUENCE_RELATION) {
             getCurrentObject().confidence = conf;
         }
         _objectStack.push(conf);
@@ -615,6 +649,11 @@
             case ANNOTATION:
                 newAnnotation(tag);
                 break;
+            case CLADE_RELATION:
+                if (_tagStack.get(1) == PHYLOGENY) {
+                    newCladeRelation(tag);
+                }
+                break;
             case COLOR:
                 newBranchColor();
                 break;
@@ -662,6 +701,11 @@
             case SEQUENCE:
                 newSequence(tag);
                 break;
+            case SEQUENCE_RELATION:
+                if (_tagStack.get(1) == PHYLOGENY) {
+                    newSequenceRelation(tag);
+                }
+                break;
             case TAXONOMY:
                 newTaxonomy(tag);
                 break;
@@ -681,6 +725,7 @@
         else if (
             tag == ACCESSION
             || tag == ANNOTATION
+            || ( tag == CLADE_RELATION && (_tagStack.get(1) == PHYLOGENY) )
             || tag == COLOR
             || tag == CONFIDENCE
             || tag == CROSS_REFERENCES
@@ -694,6 +739,7 @@
             || tag == DOMAIN_ARCHITECTURE
             || tag == PROTEINDOMAIN
             || tag == SEQUENCE
+            || ( tag == SEQUENCE_RELATION && (_tagStack.get(1) == PHYLOGENY) )
             || tag == PROPERTY
             || tag == POINT
             || tag == URI) {
