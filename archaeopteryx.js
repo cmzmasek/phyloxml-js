@@ -19,7 +19,7 @@
  *
  */
 
-// v 0_18
+// v 0_19
 
 if (!d3) {
     throw "no d3";
@@ -203,32 +203,25 @@ if (!d3) {
             .attr("text-anchor", function (d) {
                 return d.children || d._children ? "end" : "start";
             })
-            .text(makeExtNodeLabel)
             .style("fill-opacity", 0.5);
 
-        if (_options.showBranchLengthValues) {
-            nodeEnter.append("text")
-                .attr("class", "bllabel")
-                .text(makeBranchLengthLabel);
-        }
+        nodeEnter.append("text")
+            .attr("class", "bllabel");
 
-        if (_options.showConfidenceValues) {
-            nodeEnter.append("text")
-                .attr("class", "conflabel")
-                .attr("text-anchor", "middle")
-                .text(makeConfidenceValuesLabel);
-        }
+        nodeEnter.append("text")
+            .attr("class", "conflabel")
+            .attr("text-anchor", "middle");
 
         node.select("text.extlabel")
             .style("font-size", function (d) {
-                return d.children || d._children ? _options.internalNodeFontSize : _options.externalNodeFontSize
+                return d.children || d._children ? _options.internalNodeFontSize + "px" : _options.externalNodeFontSize + "px"
             })
             .attr("y", function (d) {
                 return d.children || d._children ? 0.3 * _options.internalNodeFontSize : 0.3 * _options.externalNodeFontSize
             });
 
         node.select("text.bllabel")
-            .style("font-size", _options.branchDataFontSize)
+            .style("font-size", _options.branchDataFontSize + "px")
             .attr("dy", "-.25em")
             .attr("x", function (d) {
                 if (d.parent) {
@@ -240,7 +233,7 @@ if (!d3) {
             });
 
         node.select("text.conflabel")
-            .style("font-size", _options.branchDataFontSize)
+            .style("font-size", _options.branchDataFontSize + "px")
             .attr("dy", _options.branchDataFontSize)
             .attr("x", function (d) {
                 if (d.parent) {
@@ -251,9 +244,19 @@ if (!d3) {
                 }
             });
 
+
         node.select("circle.nodeCircle")
+
             .attr("r", function (d) {
-                return ( _options.internalNodeSize > 0 && ( ( d._children || d.children ) && d.parent ) ) ? _options.internalNodeSize : 0;
+                return ( ( _options.internalNodeSize > 0 && d.parent )
+                &&
+                (
+                    ( ( d._children || d.children ) && _options.showInternalNodes  )
+
+                    ||
+                    ( ( !d._children && !d.children ) && _options.showExternalNodes  )
+
+                ) ) ? _options.internalNodeSize : 0;
             })
             .style("stroke", makeNodeColor)
             .style("stroke-width", _options.branchWidthDefault)
@@ -269,6 +272,15 @@ if (!d3) {
 
         nodeUpdate.select("text")
             .style("fill-opacity", 1);
+
+        nodeUpdate.select("text.extlabel")
+            .text(makeExtNodeLabel);
+
+        nodeUpdate.select("text.bllabel")
+            .text(_options.showBranchLengthValues ? makeBranchLengthLabel : null);
+
+        nodeUpdate.select("text.conflabel")
+            .text(_options.showConfidenceValues ? makeConfidenceValuesLabel : null);
 
         var nodeExit = node.exit().transition()
             .duration(TRANSITION_DURATION)
@@ -361,11 +373,17 @@ if (!d3) {
     };
 
     var makeExtNodeLabel = function (phynode) {
+        if (!_options.showExternalLabels && !phynode.children) {
+            return null;
+        }
+        if (!_options.showInternalLabels && phynode.children) {
+            return null;
+        }
         var l = "";
         if (_options.showNodeName) {
             l = append(l, phynode.name);
         }
-        if (phynode.taxonomies && phynode.taxonomies.length > 0) {
+        if (_options.showTaxonomy && phynode.taxonomies && phynode.taxonomies.length > 0) {
             var t = phynode.taxonomies[0];
             if (_options.showTaxonomyCode) {
                 l = append(l, t.code);
@@ -388,7 +406,7 @@ if (!d3) {
                 }
             }
         }
-        if (phynode.sequences && phynode.sequences.length > 0) {
+        if (_options.showSequence && phynode.sequences && phynode.sequences.length > 0) {
             var s = phynode.sequences[0];
             if (_options.showSequenceSymbol) {
                 l = append(l, s.symbol);
@@ -512,6 +530,9 @@ if (!d3) {
         if (!_options.showNodeName) {
             _options.showNodeName = false;
         }
+        if (!_options.showTaxonomy) {
+            _options.showTaxonomy = false;
+        }
         if (!_options.showTaxonomyCode) {
             _options.showTaxonomyCode = false;
         }
@@ -527,6 +548,9 @@ if (!d3) {
         if (!_options.showTaxonomySynonyms) {
             _options.showTaxonomySynonyms = false;
         }
+        if (!_options.showSequence) {
+            _options.showSequence = false;
+        }
         if (!_options.showSequenceSymbol) {
             _options.showSequenceSymbol = false;
         }
@@ -538,6 +562,18 @@ if (!d3) {
         }
         if (!_options.showDisributions) {
             _options.showDisributions = false;
+        }
+        if (!_options.showInternalNodes) {
+            _options.showInternalNodes = false;
+        }
+        if (!_options.showExternalNodes) {
+            _options.showExternalNodes = false;
+        }
+        if (!_options.showInternalLabels) {
+            _options.showInternalLabels = false;
+        }
+        if (!_options.showExternalLabels) {
+            _options.showExternalLabels = false;
         }
         if (!_options.branchWidthDefault) {
             _options.branchWidthDefault = 2;
@@ -923,6 +959,39 @@ if (!d3) {
         $("#radio-cladogram").click(toCladegram);
     });
 
+    $(function () {
+        $("#node_name_cb").click(nodeNameCbClicked);
+    });
+
+    $(function () {
+        $("#taxonomy_cb").click(taxonomyCbClicked);
+    });
+
+    $(function () {
+        $("#sequence_cb").click(sequenceCbClicked);
+    });
+
+    $(function () {
+        $("#confidence_values_cb").click(confidenceValuesCbClicked);
+    });
+
+    $(function () {
+        $("#branch_length_values_cb").click(branchLengthsCbClicked);
+    });
+
+    $(function () {
+        $("#internal_label_cb").click(internalLabelsCbClicked);
+    });
+    $(function () {
+        $("#external_label_cb").click(externalLabelsCbClicked);
+    });
+    $(function () {
+        $("#internal_nodes_cb").click(internalNodesCbClicked);
+    });
+    $(function () {
+        $("#external_nodes_cb").click(externalNodesCbClicked);
+    });
+
 
     function toPhylogram() {
         _options.phylogram = true;
@@ -934,51 +1003,118 @@ if (!d3) {
         update();
     }
 
+    function nodeNameCbClicked() {
+        _options.showNodeName = getCheckboxValue('node_name_cb');
+        update();
+    }
+
+    function taxonomyCbClicked() {
+        _options.showTaxonomy = getCheckboxValue('taxonomy_cb');
+        update();
+    }
+
+    function sequenceCbClicked() {
+        _options.showSequence = getCheckboxValue('sequence_cb');
+        update();
+    }
+
+    function confidenceValuesCbClicked() {
+        _options.showConfidenceValues = getCheckboxValue('confidence_values_cb');
+        update();
+    }
+
+    function branchLengthsCbClicked() {
+        _options.showBranchLengthValues = getCheckboxValue('branch_length_values_cb');
+        update();
+    }
+
+    function internalLabelsCbClicked() {
+        _options.showInternalLabels = getCheckboxValue('internal_label_cb');
+        update();
+    }
+
+    function externalLabelsCbClicked() {
+        _options.showExternalLabels = getCheckboxValue('external_label_cb');
+        update();
+    }
+
+    function internalNodesCbClicked() {
+        _options.showInternalNodes = getCheckboxValue('internal_nodes_cb');
+        update();
+    }
+
+    function externalNodesCbClicked() {
+        _options.showExternalNodes = getCheckboxValue('external_nodes_cb');
+        update();
+    }
 
     function changeBranchWidth() {
-        var v = $("#branch_width_slider").slider("value");
-        _options.branchWidthDefault = v;
+        _options.branchWidthDefault = getSliderValue('branch_width_slider');
         update();
     }
 
     function changeNodeSize() {
-        var v = $("#node_size_slider").slider("value");
-        _options.internalNodeSize = v;
+        _options.internalNodeSize = getSliderValue('node_size_slider');
         update();
     }
 
     function changeInternalFontSize() {
-        var v = $("#internal_font_size_slider").slider("value");
-        _options.internalNodeFontSize = v;
+        _options.internalNodeFontSize = getSliderValue('internal_font_size_slider');
         update();
     }
 
     function changeExternalFontSize() {
-        var v = $("#external_font_size_slider").slider("value");
-        _options.externalNodeFontSize = v;
+        _options.externalNodeFontSize = getSliderValue('external_font_size_slider');
         update();
     }
 
     function changeBranchDataFontSize() {
-        var v = $("#branch_data_font_size_slider").slider("value");
-        _options.branchDataFontSize = v;
+        _options.branchDataFontSize = getSliderValue('branch_data_font_size_slider');
         update();
     }
 
-    function setRadio(id, status) {
+    function setRadioButtonValue(id, value) {
         var radio = $('#' + id);
-        radio[0].checked = status;
+        radio[0].checked = value;
         radio.button("refresh");
     }
 
+    function setCheckboxValue(id, value) {
+        var cb = $('#' + id);
+        cb[0].checked = value;
+        cb.button("refresh");
+    }
+
+    function setSliderValue(id, value) {
+        $('#' + id).slider("value", value);
+    }
+
+    function getCheckboxValue(id) {
+        return $('#' + id).is(':checked');
+    }
+
+    function getSliderValue(id) {
+        return $('#' + id).slider('value');
+    }
+
+
     function initializeGui() {
-        $("#external_font_size_slider").slider("value", _options.externalNodeFontSize);
-        $("#internal_font_size_slider").slider("value", _options.internalNodeFontSize);
-        $("#branch_data_font_size_slider").slider("value", _options.branchDataFontSize);
-        $("#node_size_slider").slider("value", _options.internalNodeSize);
-        $("#branch_width_slider").slider("value", _options.branchWidthDefault);
-        setRadio("radio-phylogram", _options.phylogram);
-        setRadio("radio-cladogram", !_options.phylogram);
+        setSliderValue('external_font_size_slider', _options.externalNodeFontSize);
+        setSliderValue('internal_font_size_slider', _options.internalNodeFontSize);
+        setSliderValue('branch_data_font_size_slider', _options.branchDataFontSize);
+        setSliderValue('node_size_slider', _options.internalNodeSize);
+        setSliderValue('branch_width_slider', _options.branchWidthDefault);
+        setRadioButtonValue('radio-phylogram', _options.phylogram);
+        setRadioButtonValue('radio-cladogram', !_options.phylogram);
+        setCheckboxValue('node_name_cb', _options.showNodeName);
+        setCheckboxValue('taxonomy_cb', _options.showTaxonomy);
+        setCheckboxValue('sequence_cb', _options.showSequence);
+        setCheckboxValue('confidence_values_cb', _options.showConfidenceValues);
+        setCheckboxValue('branch_length_values_cb', _options.showBranchLengthValues);
+        setCheckboxValue('internal_label_cb', _options.showInternalLabels);
+        setCheckboxValue('external_label_cb', _options.showExternalLabels);
+        setCheckboxValue('internal_nodes_cb', _options.showInternalNodes);
+        setCheckboxValue('external_nodes_cb', _options.showExternalNodes);
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1235,8 +1371,5 @@ if (!d3) {
     else
         this.archaeopteryx = archaeopteryx;
 })();
-
-
-
 
 
