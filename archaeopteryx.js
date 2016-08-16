@@ -19,7 +19,7 @@
  *
  */
 
-// v 0_19
+// v 0_23
 
 if (!d3) {
     throw "no d3";
@@ -48,6 +48,8 @@ if (!d3) {
     var _maxLabelLength = 0;
     var _i = 0;
     var _yScale = null;
+    var _foundNodes0 = new Set();
+    var _foundNodes1 = new Set();
 
 
     function preOrderTraversal(n, fn) {
@@ -199,7 +201,7 @@ if (!d3) {
             .attr("x", function (d) {
                 return d.children || d._children ? -10 : 10;
             })
-            .style("fill", makeLabelColor)
+            // .style("fill", makeLabelColor)
             .attr("text-anchor", function (d) {
                 return d.children || d._children ? "end" : "start";
             })
@@ -216,6 +218,7 @@ if (!d3) {
             .style("font-size", function (d) {
                 return d.children || d._children ? _options.internalNodeFontSize + "px" : _options.externalNodeFontSize + "px"
             })
+            .style("fill", makeLabelColor)
             .attr("y", function (d) {
                 return d.children || d._children ? 0.3 * _options.internalNodeFontSize : 0.3 * _options.externalNodeFontSize
             });
@@ -357,7 +360,16 @@ if (!d3) {
     };
 
     var makeNodeColor = function (phynode) {
-        if (phynode.color) {
+        if (_foundNodes0 && _foundNodes1 && _foundNodes0.has(phynode) && _foundNodes1.has(phynode) ) {
+            return _options.found0and1ColorDefault;
+        }
+        else if (_foundNodes0 && _foundNodes0.has(phynode)) {
+            return _options.found0ColorDefault;
+        }
+        else if (_foundNodes1 && _foundNodes1 .has(phynode)) {
+            return _options.found1ColorDefault;
+        }
+        else if (phynode.color) {
             var c = phynode.color;
             return "rgb(" + c.red + "," + c.green + "," + c.blue + ")";
         }
@@ -365,7 +377,16 @@ if (!d3) {
     };
 
     var makeLabelColor = function (phynode) {
-        if (phynode.color) {
+        if (_foundNodes0 && _foundNodes1 && _foundNodes0.has(phynode) && _foundNodes1.has(phynode) ) {
+            return _options.found0and1ColorDefault;
+        }
+        else if (_foundNodes0 && _foundNodes0.has(phynode)) {
+            return _options.found0ColorDefault;
+        }
+        else if (_foundNodes1 && _foundNodes1 .has(phynode)) {
+            return _options.found1ColorDefault;
+        }
+        else if (phynode.color) {
             var c = phynode.color;
             return "rgb(" + c.red + "," + c.green + "," + c.blue + ")";
         }
@@ -586,6 +607,15 @@ if (!d3) {
         }
         if (!_options.backgroundColorDefault) {
             _options.backgroundColorDefault = "#f0f0f0";
+        }
+        if (!_options.found0ColorDefault) {
+            _options.found0ColorDefault = "#00ff00";
+        }
+        if (!_options.found1ColorDefault) {
+            _options.found1ColorDefault = "#ff0000";
+        }
+        if (!_options.found0and1ColorDefault) {
+            _options.found0and1ColorDefault = "#00ffff";
         }
         if (!_options.internalNodeSize) {
             _options.internalNodeSize = 3;
@@ -897,7 +927,6 @@ if (!d3) {
             });
 
         }
-
         return nodeClick;
     }
 
@@ -952,6 +981,41 @@ if (!d3) {
     });
 
     $(function () {
+        $("input:text")
+            .button()
+            .off('keydown')
+            .off('mouseenter')
+            .off('mousedown')
+            .css({
+                'font' : 'inherit',
+                'color' : 'inherit',
+                'text-align' : 'left',
+                'outline' : 'none',
+                'cursor' : 'text',
+                'width' :'44px'
+            });
+    });
+
+
+    $( function() {
+        $( ":radio" ).checkboxradio({
+            icon: false
+        });
+        $( ":checkbox" ).checkboxradio({
+            icon: false
+        });
+
+    } );
+
+    $(function () {
+        $("#search0").keyup(search0);
+    });
+    $(function () {
+        $("#search1").keyup(search1);
+    });
+
+
+    $(function () {
         $("#radio-phylogram").click(toPhylogram);
     });
 
@@ -991,6 +1055,158 @@ if (!d3) {
     $(function () {
         $("#external_nodes_cb").click(externalNodesCbClicked);
     });
+
+
+
+    function search0() {
+        _foundNodes0.clear();
+        var q = $("#search0").val();
+        if (q) {
+            _foundNodes0 = search(q);
+        }
+        update();
+    }
+
+    function search1() {
+        _foundNodes1.clear();
+        var q = $("#search1").val();
+        if (q) {
+            _foundNodes1 = search(q);
+        }
+        update();
+    }
+
+    function search( query ) {
+        console.log("query=" + query);
+        var r = searchData( query,
+            _treeData,
+            false,
+            true,
+            false );
+        return r;
+    }
+
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+    function makeNDF( str ) {
+        if ( str === "NN"
+            || str === "TC"
+            || str === "CN"
+            || str === "TS"
+            || str === "TI"
+            || str === "SY"
+            || str === "SN"
+            || str === "GN"
+            || str === "SS"
+            || str === "SA"
+            || str === "AN"
+            || str === "NN"
+            || str === "XR"
+            || str === "MS" ) {
+            return str;
+        }
+        else {
+            return null;
+        }
+
+    }
+
+    function escapeRegExp(str){
+        return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
+    }
+
+    function matchme( s,
+                      query,
+                      case_sensitive,
+                      partial,
+                      regex ) {
+        if ( !s || !query ) {
+            return false;
+        }
+        var my_s = s.trim();
+        var my_query = query.trim();
+        if ( !case_sensitive && !regex ) {
+            my_s = my_s.toLowerCase();
+            my_query = my_query.toLowerCase();
+        }
+        if ( regex ) {
+            var re = null;
+            if ( case_sensitive ) {
+                re = new RegExp(my_query);
+            }
+            else {
+                re = new RegExp(my_query, 'i');
+            }
+            if ( re ) {
+                return ( my_s.search( re ) > - 1 );
+            }
+            else {
+                return false;
+            }
+        }
+        else if ( partial ) {
+            return ( my_s.indexOf( my_query ) >= 0 );
+        }
+        else {
+            var re = new RegExp("(\\b|_)" + escapeRegExp( my_query ) + "(\\b|_)" );
+            if ( p ) {
+                return ( my_s.search( re ) > - 1 );
+            }
+            else {
+                return false;
+            }
+        }
+    }
+
+
+    function searchData( query,
+                         phy,
+                         caseSensitive,
+                         partial,
+                         regex ) {
+        var nodes = new Set();
+        if ( !phy || !query || query.length < 1 ) {
+            return nodes;
+        }
+        var my_query = query;
+        var ndf = null;
+        if ( ( my_query.length > 2 ) && ( my_query.indexOf( ":" ) == 2 ) ) {
+            ndf = makeNDF( my_query );
+            if ( ndf ) {
+                my_query = my_query.substring( 3 );
+            }
+        }
+
+        function matcher( node ) {
+            var match = false;
+            if ( ( ( ndf === null ) || ( ndf === "NN" ) )
+                && matchme( node.name, my_query, caseSensitive, partial, regex ) ) {
+                match = true;
+            }
+            else if ( ( ( ndf === null ) || ( ndf === "TC" ) ) && node.taxonomy
+                && matchme( node.taxonomy.taxonomy_code,
+                    my_query,
+                    caseSensitive,
+                    partial,
+                    regex ) ) {
+                match = true;
+            }
+            if ( match ) {
+                nodes.add( node);
+            }
+        }
+
+        preOrderTraversal(_treeData, matcher );
+
+        return nodes;
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 
 
     function toPhylogram() {
