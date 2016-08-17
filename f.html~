@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="https://cdn.rawgit.com/cmzmasek/phyloxml-js/master/lib/sax.js"></script>
+    <script src="https://rawgit.com/cmzmasek/phyloxml-js/master/phyloxml_parser.js"></script>
+    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.4.min.js"></script>
+    <script src="https://dl.dropboxusercontent.com/u/14456265/archaeopteryx-js/archaeopteryx_0_23.js"></script>
+    <script>
+        function load() {
+
+            var options = {};
+            options.phylogram = true;
+            options.showBranchLengthValues = true;
+            options.showConfidenceValues = true;
+            options.showNodeName = true;
+            options.showSequence = false;
+            options.showTaxonomy = false;
+            options.showTaxonomyCode = false;
+            options.showTaxonomyScientificName = true;
+            options.showTaxonomyCommonName = false;
+            options.showTaxonomyRank = false;
+            options.showTaxonomySynonyms = false;
+            options.showSequenceSymbol = true;
+            options.showSequenceName = true;
+            options.showSequenceGeneSymbol = true;
+            options.showDisributions = true;
+            options.showInternalNodes = true;
+            options.showExternalNodes = false;
+            options.showInternalLabels = false;
+            options.showExternalLabels = true;
+            options.branchWidthDefault = 2;
+            options.internalNodeSize = 3;
+            options.externalNodeFontSize = 10;
+            options.internalNodeFontSize = 9;
+            options.branchDataFontSize = 7;
+            options.branchColorDefault = "#aaaaaa";
+            options.labelColorDefault = "#202020";
+            options.backgroundColorDefault = "#f0f0f0";
+            options.found0ColorDefault = "#00ff00";
+            options.found1ColorDefault = "#ff0000";
+            options.found0and1ColorDefault = "#00ffff";
+            options.minBranchLengthValueToShow = 0.01;
+            options.minConfidenceValueToShow = 0.5;
+
+
+            var settings = {};
+            settings.rootOffset = 30;
+            settings.displayWidth = 1000;
+            settings.displayHight = 1000;
+            settings.reCenterAfterCollapse = false;
+
+            //apaf
+            //amphi_frost
+            //AtNBSpos
+            //two_trees
+            //example_2
+            //phyloxml_test2
+            //bcl_2
+            //b
+            //pfam00046
+            //pfam00046_2
+            //m
+            var loc = 'https://dl.dropboxusercontent.com/u/14456265/phyloxml_trees/apaf.xml'
+            jQuery.get(loc,
+                    function (data) {
+                        var p = phyloXmlParser;
+                        var trees = p.parse(data, {trim: true, normalize: true});
+                        // console.log(JSON.stringify(trees[0], 1))
+                        archaeopteryx.launch('#phylogram1', trees[0], options, settings);
+                    },
+                    "text");
+        }
+    </script>
+    <style type="text/css">
+
+        .overlay {
+            background-color: #f0f0f0;
+        }
+
+        <!--.node text {
+            font-family: sans-serif;
+        }-->
+
+        .link {
+            fill: none;
+        }
+
+        body {
+            font-size: 9px; font-family: Arial, Verdana, "Sans-serif";
+        }
+
+    </style>
+    <style>
+        #draggable {
+            width: 120px;
+            height: 540px;
+            padding: 0.5em;
+            opacity: 0.85;
+        }
+
+
+
+    </style>
+    <link rel="stylesheet" href="./ui.css">
+    <!--<link rel="stylesheet" href="/resources/demos/style.css">-->
+
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.0/jquery-ui.js"></script>
+    <script>
+
+        $(function () {
+            $("#draggable").draggable({ containment: "parent" });
+        });
+
+    </script>
+
+
+</head>
+<body onload="load()">
+
+<table>
+    <tr>
+        <td>
+            <h2>Archaeopteryx-js Demo: v 0_23</h2>
+            <div id='phylogram1'></div>
+            <div style="position:absolute; left: 840px; top: 100px;" id="draggable" class="ui-widget-content">
+                <p>Options</p>
+
+                <fieldset>
+                    <label for="radio-phylogram">PH</label>
+                    <input type="radio" name="radio-1" id="radio-phylogram">
+                    <label for="radio-cladogram">CL</label>
+                    <input type="radio" name="radio-1" id="radio-cladogram">
+                </fieldset>
+
+                <fieldset>
+                    <legend>Display Data:</legend>
+                    <label for="node_name_cb">Node Name</label>
+                    <input type="checkbox" name="node_name_cb" id="node_name_cb">
+                    <label for="taxonomy_cb">Taxonomy</label>
+                    <input type="checkbox" name="taxonomy_cb" id="taxonomy_cb">
+                    <label for="sequence_cb">Sequence</label>
+                    <input type="checkbox" name="sequence_cb" id="sequence_cb">
+                    <label for="confidence_values_cb">Confidence</label>
+                    <input type="checkbox" name="confidence_values_cb" id="confidence_values_cb">
+                    <label for="branch_length_values_cb">Branch Length</label>
+                    <input type="checkbox" name="branch_length_values_cb" id="branch_length_values_cb">
+                    <label for="external_label_cb">External Labels</label>
+                    <input type="checkbox" name="external_label_cb" id="external_label_cb">
+                    <label for="internal_label_cb">Internal Labels</label>
+                    <input type="checkbox" name="internal_label_cb" id="internal_label_cb">
+                    <label for="external_nodes_cb">External Nodes</label>
+                    <input type="checkbox" name="external_label_cb" id="external_nodes_cb">
+                    <label for="internal_nodes_cb">Internal Nodes</label>
+                    <input type="checkbox" name="internal_label_cb" id="internal_nodes_cb">
+                </fieldset>
+
+
+                <p>Branch width:
+                <div id="branch_width_slider"></div>
+                </p>
+                <p>Node size:
+                <div id="node_size_slider"></div>
+                </p>
+                <p>External label size:
+                <div id="external_font_size_slider"></div>
+                </p>
+                <p>Internal label size:
+                <div id="internal_font_size_slider"></div>
+                </p>
+                <p>Branch label size:
+                <div id="branch_data_font_size_slider"></div>
+                </p>
+
+
+                <p>Search (A):
+
+                    <input type="text" name="search0" id="search0"><br>
+                </p>
+                <p>Search (B):
+                     <input type="text" name="search1" id="search1"><br>
+                </p>
+
+            </div>
+
+        </td>
+    </tr>
+</table>
+
+
+</body>
