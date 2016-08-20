@@ -19,7 +19,7 @@
  *
  */
 
-// v 0_23
+// v 0_27
 
 if (!d3) {
     throw "no d3";
@@ -28,7 +28,7 @@ if (!d3) {
 
     "use strict";
 
-    var TRANSITION_DURATION = 500;
+    var TRANSITION_DURATION_DEFAULT = 500;
     var PHYLOGRAM_DEFAULT = false;
     var ROOTOFFSET_DEFAULT = 30;
     var DISPLAY_WIDTH_DEFAULT = 800;
@@ -36,6 +36,9 @@ if (!d3) {
     var RECENTER_AFTER_COLLAPSE_DEFAULT = false;
     var BRANCH_LENGTH_DIGITS_DEFAULT = 4;
     var CONFIDENCE_VALUE_DIGITS_DEFAULT = 2;
+    var ZOOM_INTERVAL = 200;
+    var BUTTON_ZOOM_IN_FACTOR = 1.2;
+    var BUTTON_ZOOM_OUT_FACTOR = 1 / BUTTON_ZOOM_IN_FACTOR;
 
     // "Instance variables"
     var _root = null;
@@ -47,10 +50,13 @@ if (!d3) {
     var _settings = null;
     var _maxLabelLength = 0;
     var _i = 0;
+    var _zoomListener = null;
     var _yScale = null;
     var _foundNodes0 = new Set();
     var _foundNodes1 = new Set();
-
+    var _displayWidth = 0;
+    var _displayHeight = 0;
+    var _intervalId = 0;
 
     function preOrderTraversal(n, fn) {
         fn(n);
@@ -103,28 +109,18 @@ if (!d3) {
         }
     }
 
-    function expand(d) {
-        if (d._children) {
-            d.children = d._children;
-            d.children.forEach(expand);
-            d._children = null;
-        }
-    }
-
     function centerNode(source, x) {
-        var scale = zoomListener.scale();
-
-        var y = -source.x0;
+        var scale = _zoomListener.scale();
         if (!x) {
             x = -source.y0;
-            x = x * scale + _settings.displayWidth / 2;
+            x = x * scale + _displayWidth / 2;
         }
-        y = y * scale + _settings.displayHeight / 2;
+        var y = 0;
         d3.select('g').transition()
-            .duration(TRANSITION_DURATION)
+            .duration(TRANSITION_DURATION_DEFAULT)
             .attr("transform", "translate(" + x + "," + y + ")scale(" + scale + ")");
-        zoomListener.scale(scale);
-        zoomListener.translate([x, y]);
+        _zoomListener.scale(scale);
+        _zoomListener.translate([x, y]);
     }
 
     function toggleChildren(d) {
@@ -144,22 +140,25 @@ if (!d3) {
             return;
         }
         d = toggleChildren(d);
-        update(d/*, _svgGroup*/);
+        update(d);
         if (_settings.reCenterAfterCollapse) {
             centerNode(d);
         }
     }
 
 
-    function update(source) {
+    function update(source, transitionDuration) {
 
         if (!source) {
             source = _root;
         }
+        if (transitionDuration === undefined) {
+            transitionDuration = TRANSITION_DURATION_DEFAULT;
+        }
 
         var nodes_ary = _tree(_treeData);
 
-        _tree = _tree.size([_settings.displayHeight, _settings.displayWidth - (_settings.rootOffset + _maxLabelLength * 10)]);
+        _tree = _tree.size([_displayHeight, _displayWidth - (_settings.rootOffset + _maxLabelLength * 10)]);
 
         _tree = _tree.separation(function separation(a, b) {
             return a.parent == b.parent ? 1 : 1;
@@ -168,7 +167,7 @@ if (!d3) {
         var nodes = _tree.nodes(_root).reverse();
         var links = _tree.links(nodes);
 
-        var w = _settings.displayWidth - (_settings.rootOffset + _maxLabelLength * 10);
+        var w = _displayWidth - (_settings.rootOffset + _maxLabelLength * 10);
         if (_options.phylogram === true) {
             _yScale = branchLengthScaling(nodes_ary, w);
         }
@@ -268,7 +267,7 @@ if (!d3) {
             });
 
         var nodeUpdate = node.transition()
-            .duration(TRANSITION_DURATION)
+            .duration(transitionDuration)
             .attr("transform", function (d) {
                 return "translate(" + d.y + "," + d.x + ")";
             });
@@ -286,7 +285,7 @@ if (!d3) {
             .text(_options.showConfidenceValues ? makeConfidenceValuesLabel : null);
 
         var nodeExit = node.exit().transition()
-            .duration(TRANSITION_DURATION)
+            .duration(0)
             .attr("transform", function () {
                 return "translate(" + source.y + "," + source.x + ")";
             })
@@ -321,11 +320,11 @@ if (!d3) {
             });
 
         link.transition()
-            .duration(TRANSITION_DURATION)
+            .duration(transitionDuration)
             .attr("d", elbow);
 
         link.exit().transition()
-            .duration(TRANSITION_DURATION)
+            .duration(transitionDuration)
             .attr("d", function () {
                 var o = {
                     x: source.x,
@@ -360,13 +359,13 @@ if (!d3) {
     };
 
     var makeNodeColor = function (phynode) {
-        if (_foundNodes0 && _foundNodes1 && _foundNodes0.has(phynode) && _foundNodes1.has(phynode) ) {
+        if (_foundNodes0 && _foundNodes1 && _foundNodes0.has(phynode) && _foundNodes1.has(phynode)) {
             return _options.found0and1ColorDefault;
         }
         else if (_foundNodes0 && _foundNodes0.has(phynode)) {
             return _options.found0ColorDefault;
         }
-        else if (_foundNodes1 && _foundNodes1 .has(phynode)) {
+        else if (_foundNodes1 && _foundNodes1.has(phynode)) {
             return _options.found1ColorDefault;
         }
         else if (phynode.color) {
@@ -377,13 +376,13 @@ if (!d3) {
     };
 
     var makeLabelColor = function (phynode) {
-        if (_foundNodes0 && _foundNodes1 && _foundNodes0.has(phynode) && _foundNodes1.has(phynode) ) {
+        if (_foundNodes0 && _foundNodes1 && _foundNodes0.has(phynode) && _foundNodes1.has(phynode)) {
             return _options.found0and1ColorDefault;
         }
         else if (_foundNodes0 && _foundNodes0.has(phynode)) {
             return _options.found0ColorDefault;
         }
-        else if (_foundNodes1 && _foundNodes1 .has(phynode)) {
+        else if (_foundNodes1 && _foundNodes1.has(phynode)) {
             return _options.found1ColorDefault;
         }
         else if (phynode.color) {
@@ -535,7 +534,6 @@ if (!d3) {
             + "V" + d.target.x + "H" + d.target.y;
     };
 
-    var zoomListener = d3.behavior.zoom().scaleExtent([0.1, 3]).on("zoom", zoom);
 
     function initializeOptions(options) {
         _options = options ? options : {};
@@ -651,42 +649,53 @@ if (!d3) {
         if (!_settings.reCenterAfterCollapse) {
             _settings.reCenterAfterCollapse = RECENTER_AFTER_COLLAPSE_DEFAULT;
         }
+        intitialzeDisplaySize();
+    }
+
+    function intitialzeDisplaySize() {
+        _displayHeight = _settings.displayHeight;
+        _displayWidth = _settings.displayWidth;
     }
 
     archaeopteryx.launch = function (id, phylo, options, settings) {
         _treeData = phylo;
-
+        _zoomListener = d3.behavior.zoom().scaleExtent([0.1, 3]).on("zoom", zoom);
         initializeOptions(options);
         initializeSettings(settings);
 
         _baseSvg = d3.select(id).append("svg")
-            .attr("width", _settings.displayWidth)
-            .attr("height", _settings.displayHeight)
+            .attr("width", _displayWidth)
+            .attr("height", _displayHeight)
             .attr("class", "overlay")
-            .call(zoomListener);
+            .call(_zoomListener);
 
         _svgGroup = _baseSvg.append("g");
 
         _tree = d3.layout.cluster()
-            .size([_settings.displayHeight, _settings.displayWidth]);
+            .size([_displayHeight, _displayWidth]);
 
         _tree.clickEvent = getClickEventListenerNode(phylo); //TODO
 
+        calculateMaxExtLabel();
+
+        _root = phylo;
+        _root.x0 = _displayHeight / 2;
+        _root.y0 = 0;
+        initializeGui();
+        update(null, 0);
+        centerNode(_root, _settings.rootOffset);
+    };
+
+
+    function calculateMaxExtLabel() {
+        _maxLabelLength = 1;
         preOrderTraversal(_treeData, function (d) {
             var l = makeExtNodeLabel(d);
             if (l) {
                 _maxLabelLength = Math.max(l.length, _maxLabelLength);
             }
         });
-
-        _root = phylo;
-        _root.x0 = _settings.displayHeight / 2;
-        _root.y0 = 0;
-        initializeGui();
-        update(_root);
-        centerNode(_root, _settings.rootOffset);
-    };
-
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -783,7 +792,6 @@ if (!d3) {
                 });
                 update();
             }
-
 
             function reRoot2(tree, d) {
                 reRoot(tree, d, -1);
@@ -927,6 +935,7 @@ if (!d3) {
             });
 
         }
+
         return nodeClick;
     }
 
@@ -987,25 +996,123 @@ if (!d3) {
             .off('mouseenter')
             .off('mousedown')
             .css({
-                'font' : 'inherit',
-                'color' : 'inherit',
-                'text-align' : 'left',
-                'outline' : 'none',
-                'cursor' : 'text',
-                'width' :'44px'
+                'font': 'inherit',
+                'color': 'inherit',
+                'text-align': 'left',
+                'outline': 'none',
+                'cursor': 'text',
+                'width': '44px'
             });
     });
 
 
-    $( function() {
-        $( ":radio" ).checkboxradio({
+    $(function () {
+        $("input:button")
+            .button()
+            .css({
+                'width': '28px',
+                'text-align': 'center',
+                'outline': 'none',
+                'margin': '1px'
+            });
+    });
+
+
+    $(function () {
+        $("#zoom_in_y, #zoom_out_y")
+            .css({
+                'width': '94px'
+            });
+    });
+
+
+    $(function () {
+        $("#zoom_in_y").mousedown(function () {
+            zoomInY();
+            _intervalId = setInterval(zoomInY, ZOOM_INTERVAL);
+        }).bind('mouseup mouseleave', function () {
+            clearTimeout(_intervalId);
+        });
+    });
+
+    $(function () {
+        $("#zoom_out_y").mousedown(function () {
+            zoomOutY();
+            _intervalId = setInterval(zoomOutY, ZOOM_INTERVAL);
+        }).bind('mouseup mouseleave', function () {
+            clearTimeout(_intervalId);
+        });
+    });
+
+
+    $(function () {
+        $("#zoom_in_x").mousedown(function () {
+            zoomInX();
+            _intervalId = setInterval(zoomInX, ZOOM_INTERVAL);
+        }).bind('mouseup mouseleave', function () {
+            clearTimeout(_intervalId);
+        });
+    });
+
+    $(function () {
+        $("#zoom_out_x").mousedown(function () {
+            zoomOutX();
+            _intervalId = setInterval(zoomOutX, ZOOM_INTERVAL);
+        }).bind('mouseup mouseleave', function () {
+            clearTimeout(_intervalId);
+        });
+    });
+
+    $(function () {
+        $("#zoom_to_fit").mousedown(zoomFit);
+    });
+
+    function zoomInX() {
+        _displayWidth = _displayWidth * BUTTON_ZOOM_IN_FACTOR;
+        update(null, 0);
+    }
+
+    function zoomInY() {
+        _displayHeight = _displayHeight * BUTTON_ZOOM_IN_FACTOR;
+        update(null, 0);
+    }
+
+    function zoomOutX() {
+        _displayWidth = _displayWidth * BUTTON_ZOOM_OUT_FACTOR;
+        var min = 0.75 * ( _settings.displayWidth - _maxLabelLength - _settings.rootOffset );
+        if (_displayWidth < min) {
+            _displayWidth = min;
+        }
+        update(null, 0);
+    }
+
+    function zoomOutY() {
+        _displayHeight = _displayHeight * BUTTON_ZOOM_OUT_FACTOR;
+        var min = 0.25 * _settings.displayHeight;
+        if (_displayHeight < min) {
+            _displayHeight = min;
+        }
+        update(null, 0);
+    }
+
+    function zoomFit() {
+        calculateMaxExtLabel();
+        intitialzeDisplaySize();
+        initializeSettings(_settings);
+        _zoomListener.scale(1);
+        update(null, 0);
+        centerNode(_root, _settings.rootOffset);
+    }
+
+    $(function () {
+        $(":radio").checkboxradio({
             icon: false
         });
-        $( ":checkbox" ).checkboxradio({
+        $(":checkbox").checkboxradio({
             icon: false
         });
 
-    } );
+    });
 
     $(function () {
         $("#search0").keyup(search0);
@@ -1046,6 +1153,7 @@ if (!d3) {
     $(function () {
         $("#internal_label_cb").click(internalLabelsCbClicked);
     });
+
     $(function () {
         $("#external_label_cb").click(externalLabelsCbClicked);
     });
@@ -1055,7 +1163,6 @@ if (!d3) {
     $(function () {
         $("#external_nodes_cb").click(externalNodesCbClicked);
     });
-
 
 
     function search0() {
@@ -1076,22 +1183,21 @@ if (!d3) {
         update();
     }
 
-    function search( query ) {
+    function search(query) {
         console.log("query=" + query);
-        var r = searchData( query,
+        var r = searchData(query,
             _treeData,
             false,
             true,
-            false );
+            false);
         return r;
     }
 
 
-
     ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-    function makeNDF( str ) {
-        if ( str === "NN"
+    function makeNDF(str) {
+        if (str === "NN"
             || str === "TC"
             || str === "CN"
             || str === "TS"
@@ -1104,7 +1210,7 @@ if (!d3) {
             || str === "AN"
             || str === "NN"
             || str === "XR"
-            || str === "MS" ) {
+            || str === "MS") {
             return str;
         }
         else {
@@ -1113,46 +1219,46 @@ if (!d3) {
 
     }
 
-    function escapeRegExp(str){
+    function escapeRegExp(str) {
         return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
     }
 
-    function matchme( s,
-                      query,
-                      case_sensitive,
-                      partial,
-                      regex ) {
-        if ( !s || !query ) {
+    function matchme(s,
+                     query,
+                     case_sensitive,
+                     partial,
+                     regex) {
+        if (!s || !query) {
             return false;
         }
         var my_s = s.trim();
         var my_query = query.trim();
-        if ( !case_sensitive && !regex ) {
+        if (!case_sensitive && !regex) {
             my_s = my_s.toLowerCase();
             my_query = my_query.toLowerCase();
         }
-        if ( regex ) {
+        if (regex) {
             var re = null;
-            if ( case_sensitive ) {
+            if (case_sensitive) {
                 re = new RegExp(my_query);
             }
             else {
                 re = new RegExp(my_query, 'i');
             }
-            if ( re ) {
-                return ( my_s.search( re ) > - 1 );
+            if (re) {
+                return ( my_s.search(re) > -1 );
             }
             else {
                 return false;
             }
         }
-        else if ( partial ) {
-            return ( my_s.indexOf( my_query ) >= 0 );
+        else if (partial) {
+            return ( my_s.indexOf(my_query) >= 0 );
         }
         else {
-            var re = new RegExp("(\\b|_)" + escapeRegExp( my_query ) + "(\\b|_)" );
-            if ( p ) {
-                return ( my_s.search( re ) > - 1 );
+            var re = new RegExp("(\\b|_)" + escapeRegExp(my_query) + "(\\b|_)");
+            if (p) {
+                return ( my_s.search(re) > -1 );
             }
             else {
                 return false;
@@ -1161,52 +1267,50 @@ if (!d3) {
     }
 
 
-    function searchData( query,
-                         phy,
-                         caseSensitive,
-                         partial,
-                         regex ) {
+    function searchData(query,
+                        phy,
+                        caseSensitive,
+                        partial,
+                        regex) {
         var nodes = new Set();
-        if ( !phy || !query || query.length < 1 ) {
+        if (!phy || !query || query.length < 1) {
             return nodes;
         }
         var my_query = query;
         var ndf = null;
-        if ( ( my_query.length > 2 ) && ( my_query.indexOf( ":" ) == 2 ) ) {
-            ndf = makeNDF( my_query );
-            if ( ndf ) {
-                my_query = my_query.substring( 3 );
+        if (( my_query.length > 2 ) && ( my_query.indexOf(":") == 2 )) {
+            ndf = makeNDF(my_query);
+            if (ndf) {
+                my_query = my_query.substring(3);
             }
         }
 
-        function matcher( node ) {
+        function matcher(node) {
             var match = false;
-            if ( ( ( ndf === null ) || ( ndf === "NN" ) )
-                && matchme( node.name, my_query, caseSensitive, partial, regex ) ) {
+            if (( ( ndf === null ) || ( ndf === "NN" ) )
+                && matchme(node.name, my_query, caseSensitive, partial, regex)) {
                 match = true;
             }
-            else if ( ( ( ndf === null ) || ( ndf === "TC" ) ) && node.taxonomy
-                && matchme( node.taxonomy.taxonomy_code,
+            else if (( ( ndf === null ) || ( ndf === "TC" ) ) && node.taxonomy
+                && matchme(node.taxonomy.taxonomy_code,
                     my_query,
                     caseSensitive,
                     partial,
-                    regex ) ) {
+                    regex)) {
                 match = true;
             }
-            if ( match ) {
-                nodes.add( node);
+            if (match) {
+                nodes.add(node);
             }
         }
 
-        preOrderTraversal(_treeData, matcher );
+        preOrderTraversal(_treeData, matcher);
 
         return nodes;
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-
-
 
 
     function toPhylogram() {
@@ -1334,8 +1438,6 @@ if (!d3) {
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
-
-    // options.skipBranchLengthScaling = !$('#scale_distance').is(':checked');
 
 
     // --------------------------------------------------------------
