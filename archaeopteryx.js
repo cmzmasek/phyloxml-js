@@ -19,7 +19,7 @@
  *
  */
 
-// v 0_27
+// v 0_28
 
 if (!d3) {
     throw "no d3";
@@ -714,6 +714,97 @@ if (!d3) {
 
         function nodeClick(d) {
 
+            function displayNodeData(n) {
+                console.log("displayNodeData");
+
+                var title = n.name ? "Node Data: " + n.name : "Node Data";
+                var text = "";
+                if (n.name) {
+                    text += "Name: " + n.name + "<br>";
+                }
+                if (n.branch_length) {
+                    text += "Distance to Parent: " + n.branch_length + "<br>";
+                }
+                if (n.confidences) {
+                    for (var i = 0; i < n.confidences.length; ++i) {
+                        var c = n.confidences[i];
+                        if (c.type) {
+                            text += "- Confidence [" + c.type + "]: " + c.value + "<br>";
+                        }
+                        else {
+                            text += "- Confidence: " + c.value + "<br>";
+                        }
+                        if (c.stddev) {
+                            text += "-- Stdev: " + c.stddev + "<br>";
+                        }
+                    }
+                }
+
+                if (n.taxonomies) {
+                    for (var i = 0; i < n.taxonomies.length; ++i) {
+                        text += "Taxonomy<br>";
+                        var t = n.taxonomies[i];
+                        if (t.code) {
+                            text += "- Code: " + t.code + "<br>";
+                        }
+                        if (t.scientific_name) {
+                            text += "- Scientific name: " + t.scientific_name + "<br>";
+                        }
+                        if (t.common_name) {
+                            text += "- Common name: " + t.common_name + "<br>";
+                        }
+                        if (t.synonym) {
+                            text += "- Synonym: " + t.synonym + "<br>";
+                        }
+                        if (t.rank) {
+                            text += "- Rank: " + t.rank + "<br>";
+                        }
+                    }
+                }
+                if (n.sequences) {
+                    for (var i = 0; i < n.sequences.length; ++i) {
+                        text += "Sequence<br>";
+                        var s = n.sequences[i];
+                        if (s.symbol) {
+                            text += "- Symbol: " + s.symbol + "<br>";
+                        }
+                        if (s.name) {
+                            text += "- Name: " + s.name + "<br>";
+                        }
+                        if (s.gene_name) {
+                            text += "- Gene name: " + s.gene_name + "<br>";
+                        }
+                        if (s.location) {
+                            text += "- Location: " + s.location + "<br>";
+                        }
+                    }
+                }
+                if (n.distribution) {
+                    text += "Distribution<br>";
+                    var d = n.distribution;
+                    if (d.desc) {
+                        text += "- Description: " + d.desc + "<br>";
+                    }
+                }
+                if (n.date) {
+                    text += "Date<br>";
+                    var d = n.date;
+                    if (d.desc) {
+                        text += "- Description: " + d.desc + "<br>";
+                    }
+                }
+                $("<div id='node_data'>" + text + "</div>").dialog();
+                var dialog = $("#node_data");
+                dialog.dialog("option", "modal", true);
+                dialog.dialog("option", "title", title);
+                update(d);
+            }
+
+            function goToSubTree(d) {
+                console.log("goToSubTree");
+                update(d);
+            }
+
             function swapChildren(d) {
                 var c = d.children;
                 var l = c.length;
@@ -799,7 +890,7 @@ if (!d3) {
             }
 
             var rectWidth = 120;
-            var rectHeight = 110;
+            var rectHeight = 130;
 
             removeTooltips();
 
@@ -818,6 +909,8 @@ if (!d3) {
             var topPad = 20;
             var textSum = 0;
             var textInc = 20;
+
+
             d3.select(this).append("text")
                 .attr("class", "tooltipElem tooltipElemText")
                 .attr("y", topPad + textSum)
@@ -825,13 +918,31 @@ if (!d3) {
                 .style("fill", "white")
                 .style("font-weight", "bold")
                 .text(function (d) {
-                    if (d._children) {
+                    if (d.parent) {
                         textSum += textInc;
-                        return "Uncollapse";
+                        return "Display Node Data";
                     }
-                    else if (d.children) {
-                        textSum += textInc;
-                        return "Collapse";
+                })
+                .on("click", function (d) {
+                    displayNodeData(d);
+                });
+
+            d3.select(this).append("text")
+                .attr("class", "tooltipElem tooltipElemText")
+                .attr("y", topPad + textSum)
+                .attr("x", +rightPad)
+                .style("fill", "white")
+                .style("font-weight", "bold")
+                .text(function (d) {
+                    if (d.parent && d.parent.parent) {
+                        if (d._children) {
+                            textSum += textInc;
+                            return "Uncollapse";
+                        }
+                        else if (d.children) {
+                            textSum += textInc;
+                            return "Collapse";
+                        }
                     }
                 })
                 .on("click", function (d) {
@@ -860,6 +971,7 @@ if (!d3) {
                     unCollapseAll(d, true);
                 });
 
+
             d3.select(this).append("text")
                 .attr("class", "tooltipElem tooltipElemText")
                 .attr("y", topPad + textSum)
@@ -869,7 +981,32 @@ if (!d3) {
                 .text(function (d) {
                     if (d.children) {
                         textSum += textInc;
-                        return "Swap Descendants";
+                        if (d.parent) {
+                            if (!d.parent.parent) {
+                                return "Go to Super-tree";
+                            }
+                            else {
+                                return "Go to Sub-tree";
+                            }
+                        }
+                    }
+                })
+                .on("click", function (d) {
+                    goToSubTree(d);
+                });
+
+            d3.select(this).append("text")
+                .attr("class", "tooltipElem tooltipElemText")
+                .attr("y", topPad + textSum)
+                .attr("x", +rightPad)
+                .style("fill", "white")
+                .style("font-weight", "bold")
+                .text(function (d) {
+                    if (d.parent) {
+                        if (d.children) {
+                            textSum += textInc;
+                            return "Swap Descendants";
+                        }
                     }
                 })
                 .on("click", function (d) {
@@ -877,7 +1014,6 @@ if (!d3) {
                     update();
                 });
 
-
             d3.select(this).append("text")
                 .attr("class", "tooltipElem tooltipElemText")
                 .attr("y", topPad + textSum)
@@ -885,9 +1021,11 @@ if (!d3) {
                 .style("fill", "white")
                 .style("font-weight", "bold")
                 .text(function (d) {
-                    if (d.children) {
-                        textSum += textInc;
-                        return "Order Subtree";
+                    if (d.parent) {
+                        if (d.children) {
+                            textSum += textInc;
+                            return "Order Subtree";
+                        }
                     }
                 })
                 .on("click", function (d) {
