@@ -19,7 +19,7 @@
  *
  */
 
-// v 0_28
+// v 0_29
 
 if (!d3) {
     throw "no d3";
@@ -45,6 +45,7 @@ if (!d3) {
     var _svgGroup = null;
     var _baseSvg = null;
     var _tree = null;
+    var _superTreeRoots = [];
     var _treeData = null;
     var _options = null;
     var _settings = null;
@@ -715,7 +716,6 @@ if (!d3) {
         function nodeClick(d) {
 
             function displayNodeData(n) {
-                console.log("displayNodeData");
 
                 var title = n.name ? "Node Data: " + n.name : "Node Data";
                 var text = "";
@@ -797,12 +797,25 @@ if (!d3) {
                 var dialog = $("#node_data");
                 dialog.dialog("option", "modal", true);
                 dialog.dialog("option", "title", title);
-                update(d);
+                update();
             }
 
-            function goToSubTree(d) {
-                console.log("goToSubTree");
-                update(d);
+            function goToSubTree(node) {
+                if (node.parent && node.children) {
+                    if (node === _root && _superTreeRoots.length > 0) {
+                        _root = _superTreeRoots.pop();
+                        console.log("goToSubTree: <--");
+                        update(_root);
+                        zoomFit()
+                    }
+                    else if (node.parent.parent) {
+                        _superTreeRoots.push(_root);
+                        _root = node;
+                        console.log("goToSubTree: -->");
+                        update(_root);
+                        zoomFit()
+                    }
+                }
             }
 
             function swapChildren(d) {
@@ -979,17 +992,17 @@ if (!d3) {
                 .style("fill", "white")
                 .style("font-weight", "bold")
                 .text(function (d) {
-                    if (d.children) {
-                        textSum += textInc;
-                        if (d.parent) {
-                            if (!d.parent.parent) {
-                                return "Go to Super-tree";
-                            }
-                            else {
-                                return "Go to Sub-tree";
-                            }
+                    if (d.parent && d.children) {
+                        if (d === _root && _superTreeRoots.length > 0) {
+                            textSum += textInc;
+                            return "Return to Super-tree";
+                        }
+                        else if (d.parent.parent) {
+                            textSum += textInc;
+                            return "Go to Sub-tree";
                         }
                     }
+
                 })
                 .on("click", function (d) {
                     goToSubTree(d);
@@ -1047,7 +1060,7 @@ if (!d3) {
                 .style("fill", "white")
                 .style("font-weight", "bold")
                 .text(function (d) {
-                    if (d.parent && d.parent.parent) {
+                    if (d.parent && d.parent.parent && _superTreeRoots.length < 1) {
                         textSum += textInc;
                         return "Reroot";
                     }
