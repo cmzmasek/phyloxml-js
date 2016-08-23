@@ -19,7 +19,7 @@
  *
  */
 
-// v 0_29
+// v 0_30
 
 if (!d3) {
     throw "no d3";
@@ -393,13 +393,26 @@ if (!d3) {
         return _options.labelColorDefault;
     };
 
+    var _dynahide_counter = 0;
+    var _dynahide_factor = 3;
+
     var makeExtNodeLabel = function (phynode) {
+
+
         if (!_options.showExternalLabels && !phynode.children) {
             return null;
         }
         if (!_options.showInternalLabels && phynode.children) {
             return null;
         }
+
+        if (_options.dynahide && !phynode.children) {
+            if (++_dynahide_counter % _dynahide_factor !== 0) {
+                console.log("c=" + _dynahide_counter);
+                return null;
+            }
+        }
+
         var l = "";
         if (_options.showNodeName) {
             l = append(l, phynode.name);
@@ -439,12 +452,13 @@ if (!d3) {
                 l = appendP(l, s.gene_name);
             }
         }
-        if (_options.showDisributions && phynode.distributions && phynode.distributions.length > 0) {
+        if (_options.showDistributions && phynode.distributions && phynode.distributions.length > 0) {
             var d = phynode.distributions;
             for (var i = 0; i < d.length; ++i) {
                 l = appendB(l, d[i].desc);
             }
         }
+        console.log(l);
         return l;
     };
 
@@ -580,8 +594,8 @@ if (!d3) {
         if (!_options.showSequenceGeneSymbol) {
             _options.showSequenceGeneSymbol = false;
         }
-        if (!_options.showDisributions) {
-            _options.showDisributions = false;
+        if (!_options.showDistributions) {
+            _options.showDistributions = false;
         }
         if (!_options.showInternalNodes) {
             _options.showInternalNodes = false;
@@ -633,6 +647,9 @@ if (!d3) {
         }
         if (!_options.minConfidenceValueToShow) {
             _options.minConfidenceValueToShow = null;
+        }
+        if (!_options.dynahide) {
+            _options.dynahide = false;
         }
     }
 
@@ -806,14 +823,14 @@ if (!d3) {
                         _root = _superTreeRoots.pop();
                         console.log("goToSubTree: <--");
                         update(_root);
-                        zoomFit()
+                        zoomFit();
                     }
                     else if (node.parent.parent) {
                         _superTreeRoots.push(_root);
                         _root = node;
                         console.log("goToSubTree: -->");
                         update(_root);
-                        zoomFit()
+                        zoomFit();
                     }
                 }
             }
@@ -923,7 +940,6 @@ if (!d3) {
             var textSum = 0;
             var textInc = 20;
 
-
             d3.select(this).append("text")
                 .attr("class", "tooltipElem tooltipElemText")
                 .attr("y", topPad + textSum)
@@ -983,7 +999,6 @@ if (!d3) {
                 .on("click", function (d) {
                     unCollapseAll(d, true);
                 });
-
 
             d3.select(this).append("text")
                 .attr("class", "tooltipElem tooltipElemText")
