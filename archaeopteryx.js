@@ -19,7 +19,7 @@
  *
  */
 
-// v 0_30
+// v 0_32
 
 if (!d3) {
     throw "no d3";
@@ -458,7 +458,7 @@ if (!d3) {
                 l = appendB(l, d[i].desc);
             }
         }
-        console.log(l);
+        //console.log(l);
         return l;
     };
 
@@ -746,21 +746,28 @@ if (!d3) {
                     for (var i = 0; i < n.confidences.length; ++i) {
                         var c = n.confidences[i];
                         if (c.type) {
-                            text += "- Confidence [" + c.type + "]: " + c.value + "<br>";
+                            text += "Confidence [" + c.type + "]: " + c.value + "<br>";
                         }
                         else {
-                            text += "- Confidence: " + c.value + "<br>";
+                            text += "Confidence: " + c.value + "<br>";
                         }
                         if (c.stddev) {
-                            text += "-- Stdev: " + c.stddev + "<br>";
+                            text += "- stdev: " + c.stddev + "<br>";
                         }
                     }
                 }
-
                 if (n.taxonomies) {
                     for (var i = 0; i < n.taxonomies.length; ++i) {
                         text += "Taxonomy<br>";
                         var t = n.taxonomies[i];
+                        if (t.id) {
+                            if (t.id.provider) {
+                                text += "- Id [" + t.id.provider + "]: " + t.id.value + "<br>";
+                            }
+                            else {
+                                text += "- Id: " + t.id.value + "<br>";
+                            }
+                        }
                         if (t.code) {
                             text += "- Code: " + t.code + "<br>";
                         }
@@ -782,6 +789,17 @@ if (!d3) {
                     for (var i = 0; i < n.sequences.length; ++i) {
                         text += "Sequence<br>";
                         var s = n.sequences[i];
+                        if (s.accession) {
+                            if (s.accession.source) {
+                                text += "- Accession [" + s.accession.source + "]: " + s.accession.value + "<br>";
+                            }
+                            else {
+                                text += "- Accession: " + s.accession.value + "<br>";
+                            }
+                            if (s.accession.comment) {
+                                text += "-- comment: " + s.accession.commen + "<br>";
+                            }
+                        }
                         if (s.symbol) {
                             text += "- Symbol: " + s.symbol + "<br>";
                         }
@@ -793,6 +811,9 @@ if (!d3) {
                         }
                         if (s.location) {
                             text += "- Location: " + s.location + "<br>";
+                        }
+                        if (s.type) {
+                            text += "- Type: " + s.type + "<br>";
                         }
                     }
                 }
@@ -1362,10 +1383,11 @@ if (!d3) {
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-    function makeNDF(str) {
+    function makeNDF(query) {
+        var str = query.substring(0, 2);
         if (str === "NN"
             || str === "TC"
-            || str === "CN"
+            || str === "TN"
             || str === "TS"
             || str === "TI"
             || str === "SY"
@@ -1374,7 +1396,6 @@ if (!d3) {
             || str === "SS"
             || str === "SA"
             || str === "AN"
-            || str === "NN"
             || str === "XR"
             || str === "MS") {
             return str;
@@ -1382,7 +1403,6 @@ if (!d3) {
         else {
             return null;
         }
-
     }
 
     function escapeRegExp(str) {
@@ -1442,27 +1462,135 @@ if (!d3) {
         if (!phy || !query || query.length < 1) {
             return nodes;
         }
-        var my_query = query;
-        var ndf = null;
-        if (( my_query.length > 2 ) && ( my_query.indexOf(":") == 2 )) {
-            ndf = makeNDF(my_query);
-            if (ndf) {
-                my_query = my_query.substring(3);
+        var my_query = query.trim();
+        if (my_query.length < 1) {
+            return nodes;
+        }
+
+        var queries = [];
+
+        if (( my_query.indexOf(",") >= 0 ) && !regex) {
+            queries = my_query.split(",");
+        }
+        else {
+            queries.push(my_query);
+        }
+        var queriesLength = queries.length;
+
+        for (var i = 0; i < queriesLength; ++i) {
+            var q = queries[i];
+            if (q) {
+                q = q.trim();
+                if (q.length > 0) {
+                    console.log("q=" + q);
+                    var ndf = null;
+                    if (( q.length > 3 ) && ( q.indexOf(":") === 2 )) {
+                        ndf = makeNDF(q);
+                        if (ndf) {
+                            q = q.substring(3);
+                        }
+                    }
+                    preOrderTraversal(_treeData, matcher);
+                }
             }
         }
+
+        return nodes;
 
         function matcher(node) {
             var match = false;
             if (( ( ndf === null ) || ( ndf === "NN" ) )
-                && matchme(node.name, my_query, caseSensitive, partial, regex)) {
+                && matchme(node.name, q, caseSensitive, partial, regex)) {
                 match = true;
             }
-            else if (( ( ndf === null ) || ( ndf === "TC" ) ) && node.taxonomy
-                && matchme(node.taxonomy.taxonomy_code,
-                    my_query,
+            else if (( ( ndf === null ) || ( ndf === "TC" ) ) && node.taxonomies
+                && node.taxonomies.length > 0
+                && matchme(node.taxonomies[0].code,
+                    q,
                     caseSensitive,
                     partial,
                     regex)) {
+                console.log("TC");
+                match = true;
+            }
+            else if (( ( ndf === null ) || ( ndf === "TS" ) ) && node.taxonomies
+                && node.taxonomies.length > 0
+                && matchme(node.taxonomies[0].scientific_name,
+                    q,
+                    caseSensitive,
+                    partial,
+                    regex)) {
+                console.log("TS");
+                match = true;
+            }
+            else if (( ( ndf === null ) || ( ndf === "TN" ) ) && node.taxonomies
+                && node.taxonomies.length > 0
+                && matchme(node.taxonomies[0].common_name,
+                    q,
+                    caseSensitive,
+                    partial,
+                    regex)) {
+                console.log("TN");
+                match = true;
+            }
+            else if (( ( ndf === null ) || ( ndf === "SY" ) ) && node.taxonomies
+                && node.taxonomies.length > 0
+                && matchme(node.taxonomies[0].synonym,
+                    q,
+                    caseSensitive,
+                    partial,
+                    regex)) {
+                console.log("SY");
+                match = true;
+            }
+            else if (( ( ndf === null ) || ( ndf === "TI" ) ) && node.taxonomies
+                && node.taxonomies.length > 0 && node.taxonomies[0].id
+                && matchme(node.taxonomies[0].id.value,
+                    q,
+                    caseSensitive,
+                    partial,
+                    regex)) {
+                console.log("TI");
+                match = true;
+            }
+            else if (( ( ndf === null ) || ( ndf === "SN" ) ) && node.sequences
+                && node.sequences.length > 0
+                && matchme(node.sequences[0].name,
+                    q,
+                    caseSensitive,
+                    partial,
+                    regex)) {
+                console.log("SN");
+                match = true;
+            }
+            else if (( ( ndf === null ) || ( ndf === "GN" ) ) && node.sequences
+                && node.sequences.length > 0
+                && matchme(node.sequences[0].gene_name,
+                    q,
+                    caseSensitive,
+                    partial,
+                    regex)) {
+                console.log("GN");
+                match = true;
+            }
+            else if (( ( ndf === null ) || ( ndf === "SS" ) ) && node.sequences
+                && node.sequences.length > 0
+                && matchme(node.sequences[0].symbol,
+                    q,
+                    caseSensitive,
+                    partial,
+                    regex)) {
+                console.log("SS");
+                match = true;
+            }
+            else if (( ( ndf === null ) || ( ndf === "SA" ) ) && node.sequences
+                && node.sequences.length > 0 && node.sequences[0].accession
+                && matchme(node.sequences[0].accession.value,
+                    q,
+                    caseSensitive,
+                    partial,
+                    regex)) {
+                console.log("SA");
                 match = true;
             }
             if (match) {
@@ -1470,9 +1598,7 @@ if (!d3) {
             }
         }
 
-        preOrderTraversal(_treeData, matcher);
 
-        return nodes;
     }
 
 
