@@ -19,7 +19,7 @@
  *
  */
 
-// v 0_35
+// v 0_37
 
 if (!d3) {
     throw "no d3";
@@ -58,6 +58,9 @@ if (!d3) {
     var _displayWidth = 0;
     var _displayHeight = 0;
     var _intervalId = 0;
+    var _dataForVisualization = {};
+    var _currentLabelColorVisualization = null;
+
 
     function preOrderTraversal(n, fn) {
         fn(n);
@@ -386,18 +389,72 @@ if (!d3) {
         else if (_foundNodes1 && _foundNodes1.has(phynode)) {
             return _options.found1ColorDefault;
         }
-        else if (phynode.color) {
+
+        if (_currentLabelColorVisualization) {
+            var color = labelColorVisualization(phynode);
+            if (color) {
+                return color;
+            }
+        }
+        if (phynode.color) {
             var c = phynode.color;
             return "rgb(" + c.red + "," + c.green + "," + c.blue + ")";
         }
         return _options.labelColorDefault;
     };
 
+
+    function labelColorVisualization(node) {
+        var distColors = {};
+        distColors.CA = "rgb(0,0,255)";
+        distColors.AZ = "rgb(0,255,255)";
+        distColors.NY = "rgb(255,0,255)";
+        distColors.MN = "rgb(100,0,255)";
+        distColors.FL = "rgb(100,0,100)";
+        distColors.IL = "rgb(100,100,100)";
+        distColors.IL = "rgb(100,0,125)";
+
+        var drugColors = {};
+        drugColors.Amantadine = "rgb(0,0,255)";
+        drugColors.Docosanol = "rgb(0,255,0)";
+        drugColors.Emtricitabin = "rgb(255,0,0)";
+
+        var hostColors = {};
+        hostColors["Gallus gallus"] = "rgb(129,20,0)";
+        hostColors["Anas platyrhynchos"] = "rgb(93,40,255)";
+        hostColors["Sus scrofa"] = "rgb(10,129,23)";
+
+        if (_currentLabelColorVisualization === "distribution") {
+            if (node.distributions && node.distributions.length > 0) {
+                return distColors[node.distributions[0].desc];
+            }
+        }
+        else if (_currentLabelColorVisualization === "vipr:host"
+            || _currentLabelColorVisualization === "vipr:drug") {
+            if (node.properties && node.properties.length > 0) {
+                var propertiesLength = node.properties.length;
+                for (var i = 0; i < propertiesLength; ++i) {
+                    var p = node.properties[i];
+                    if (p.ref && p.value) {
+                        var ref = p.ref;
+                        if (_currentLabelColorVisualization === "vipr:host" && ref === "vipr:host") {
+                            return hostColors[p.value];
+                        }
+                        else if (_currentLabelColorVisualization === "vipr:drug" && ref === "vipr:drug") {
+                            return drugColors[p.value];
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+
     var _dynahide_counter = 0;
     var _dynahide_factor = 3;
 
     var makeExtNodeLabel = function (phynode) {
-
 
         if (!_options.showExternalLabels && !phynode.children) {
             return null;
@@ -709,10 +766,44 @@ if (!d3) {
         _root = phylo;
         _root.x0 = _displayHeight / 2;
         _root.y0 = 0;
+
+        collectDataForVisualization();
+
         initializeGui();
         update(null, 0);
         centerNode(_root, _settings.rootOffset);
     };
+
+    function collectDataForVisualization() {
+        preOrderTraversal(_treeData, function (node) {
+            if (node.properties && node.properties.length > 0) {
+                var propertiesLength = node.properties.length;
+                for (var i = 0; i < propertiesLength; ++i) {
+                    var p = node.properties[i];
+                    if (p.ref && p.value) {
+                        var ref = p.ref;
+                        if (!_dataForVisualization[ref]) {
+                            _dataForVisualization[ref] = new Set();
+                        }
+                        _dataForVisualization[ref].add(p.value);
+                    }
+                }
+            }
+            if (node.distributions && node.distributions.length > 0) {
+                var distributionsLength = node.distributions.length;
+                for (var i = 0; i < distributionsLength; ++i) {
+                    var d = node.distributions[i];
+                    var desc = d.desc;
+                    if (desc) {
+                        if (!_dataForVisualization.distribution) {
+                            _dataForVisualization.distribution = new Set();
+                        }
+                        _dataForVisualization.distribution.add(desc);
+                    }
+                }
+            }
+        });
+    }
 
 
     function calculateMaxExtLabel() {
@@ -827,20 +918,37 @@ if (!d3) {
                         }
                     }
                 }
-                if (n.distribution) {
-                    text += "Distribution<br>";
-                    var d = n.distribution;
-                    if (d.desc) {
-                        text += "- Description: " + d.desc + "<br>";
+                if (n.distributions) {
+                    var distributions = n.distributions;
+                    for (var i = 0; i < distributions.length; ++i) {
+                        text += "Distribution: ";
+                        if (distributions[i].desc) {
+                            text += distributions[i].desc + "<br>";
+                        }
                     }
                 }
                 if (n.date) {
-                    text += "Date<br>";
-                    var d = n.date;
-                    if (d.desc) {
-                        text += "- Description: " + d.desc + "<br>";
+                    text += "Date: ";
+                    var date = n.date;
+                    if (date.desc) {
+                        text += date.desc + "<br>";
                     }
                 }
+                if (n.properties && n.properties.length > 0) {
+                    var propertiesLength = n.properties.length;
+                    for (var i = 0; i < propertiesLength; ++i) {
+                        var property = n.properties[i];
+                        if (property.ref && property.value) {
+                            if (property.unit) {
+                                text +=  property.ref + ": " + property.value + property.unit + "<br>";
+                            }
+                            else {
+                                text +=  property.ref + ": " + property.value + "<br>";
+                            }
+                        }
+                    }
+                }
+
                 $("<div id='node_data'>" + text + "</div>").dialog();
                 var dialog = $("#node_data");
                 dialog.dialog("option", "modal", true);
@@ -1362,6 +1470,21 @@ if (!d3) {
     });
 
 
+    $(function () {
+        $("#label_color_select_menu").on("change", function () {
+            var v = this.value;
+            if (v && v != "none") {
+                _currentLabelColorVisualization = v;
+                var x = _dataForVisualization[v];
+            }
+            else {
+                _currentLabelColorVisualization = null;
+            }
+            update(null, 0);
+        });
+    });
+
+
     function search0() {
         _foundNodes0.clear();
         var query = $("#search0").val();
@@ -1391,77 +1514,6 @@ if (!d3) {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-
-    function makeNDF(query) {
-        var str = query.substring(0, 2);
-        if (str === "NN"
-            || str === "TC"
-            || str === "TN"
-            || str === "TS"
-            || str === "TI"
-            || str === "SY"
-            || str === "SN"
-            || str === "GN"
-            || str === "SS"
-            || str === "SA"
-            || str === "AN"
-            || str === "XR"
-            || str === "MS") {
-            return str;
-        }
-        else {
-            return null;
-        }
-    }
-
-    function escapeRegExp(str) {
-        return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
-    }
-
-    function matchme(s,
-                     query,
-                     caseSensitive,
-                     partial,
-                     regex) {
-        if (!s || !query) {
-            return false;
-        }
-        var my_s = s.trim();
-        var my_query = query.trim();
-        if (!caseSensitive && !regex) {
-            my_s = my_s.toLowerCase();
-            my_query = my_query.toLowerCase();
-        }
-        if (regex) {
-
-            var re = null;
-            if (case_sensitive) {
-                re = new RegExp(my_query);
-            }
-            else {
-                re = new RegExp(my_query, 'i');
-            }
-            if (re) {
-                return ( my_s.search(re) > -1 );
-            }
-            else {
-                return false;
-            }
-        }
-        else if (partial) {
-            return ( my_s.indexOf(my_query) >= 0 );
-        }
-        else {
-            var np = new RegExp("(\\b|_)" + escapeRegExp(my_query) + "(\\b|_)");
-            if (np) {
-                return ( my_s.search(np) > -1 );
-            }
-            else {
-                return false;
-            }
-        }
-    }
-
 
     function searchData(query,
                         phy,
@@ -1639,6 +1691,80 @@ if (!d3) {
                 nodes.add(node);
             }
         }
+
+        function matchme(s,
+                         query,
+                         caseSensitive,
+                         partial,
+                         regex) {
+            if (!s || !query) {
+                return false;
+            }
+            var my_s = s.trim();
+            var my_query = query.trim();
+            if (!caseSensitive && !regex) {
+                my_s = my_s.toLowerCase();
+                my_query = my_query.toLowerCase();
+            }
+            if (regex) {
+                var re = null;
+                try {
+                    if (caseSensitive) {
+                        re = new RegExp(my_query);
+                    }
+                    else {
+                        re = new RegExp(my_query, 'i');
+                    }
+                }
+                catch (err) {
+                    return false;
+                }
+                if (re) {
+                    return ( my_s.search(re) > -1 );
+                }
+                else {
+                    return false;
+                }
+            }
+            else if (partial) {
+                return ( my_s.indexOf(my_query) > -1 );
+            }
+            else {
+                var np = new RegExp("(\\b|_)" + escapeRegExp(my_query) + "(\\b|_)");
+                if (np) {
+                    return ( my_s.search(np) > -1 );
+                }
+                else {
+                    return false;
+                }
+            }
+        }
+
+        function escapeRegExp(str) {
+            return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
+        }
+
+        function makeNDF(query) {
+            var str = query.substring(0, 2);
+            if (str === "NN"
+                || str === "TC"
+                || str === "TN"
+                || str === "TS"
+                || str === "TI"
+                || str === "SY"
+                || str === "SN"
+                || str === "GN"
+                || str === "SS"
+                || str === "SA"
+                || str === "AN"
+                || str === "XR"
+                || str === "MS") {
+                return str;
+            }
+            else {
+                return null;
+            }
+        }
     }
 
 
@@ -1767,6 +1893,39 @@ if (!d3) {
         setCheckboxValue('external_label_cb', _options.showExternalLabels);
         setCheckboxValue('internal_nodes_cb', _options.showInternalNodes);
         setCheckboxValue('external_nodes_cb', _options.showExternalNodes);
+        initializeVisualizationMenu();
+
+
+    }
+
+
+    function initializeVisualizationMenu() {
+        if (_dataForVisualization && Object.keys(_dataForVisualization).length) {
+            $("select#label_color_select_menu").append($("<option>")
+                .val("none")
+                .html("none")
+            );
+
+            if (_dataForVisualization["distribution"]) {
+                $("select#label_color_select_menu").append($("<option>")
+                    .val("distribution")
+                    .html("distribution")
+                );
+            }
+            if (_dataForVisualization["vipr:host"]) {
+                $("select#label_color_select_menu").append($("<option>")
+                    .val("vipr:host")
+                    .html("host")
+                );
+            }
+            if (_dataForVisualization["vipr:drug"]) {
+                $("select#label_color_select_menu").append($("<option>")
+                    .val("vipr:drug")
+                    .html("antiviral drug")
+                );
+            }
+
+        }
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
