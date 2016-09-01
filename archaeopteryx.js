@@ -195,9 +195,14 @@ if (!d3) {
             .on('click', _tree.clickEvent);
 
         nodeEnter.append("circle")
-            .style("cursor", "pointer")
             .attr('class', 'nodeCircle')
             .attr("r", 0);
+
+        nodeEnter.append("circle")
+            .style("cursor", "pointer")
+            .style("opacity", "0")
+            .attr('class', 'nodeCircleOptions')
+            .attr("r", 5);
 
         nodeEnter.append("text")
             .attr("class", "extlabel")
@@ -1246,8 +1251,8 @@ if (!d3) {
 
 
     $('html').click(function (d) {
-        if ((d.target.getAttribute("class") !== "nodeCircle")) {
-            removeTooltips();
+        if ((d.target.getAttribute("class") !== "nodeCircleOptions")) {
+           removeTooltips();
         }
     });
 
@@ -1826,28 +1831,28 @@ if (!d3) {
         update();
     }
 
-    function changeBranchWidth() {
-        _options.branchWidthDefault = getSliderValue('branch_width_slider');
+    function changeBranchWidth(e, ui) {
+        _options.branchWidthDefault = getSliderValue('branch_width_slider', ui);
         update();
     }
 
-    function changeNodeSize() {
-        _options.internalNodeSize = getSliderValue('node_size_slider');
+    function changeNodeSize(e, ui) {
+        _options.internalNodeSize = getSliderValue('node_size_slider', ui);
         update();
     }
 
-    function changeInternalFontSize() {
-        _options.internalNodeFontSize = getSliderValue('internal_font_size_slider');
+    function changeInternalFontSize(e, ui) {
+        _options.internalNodeFontSize = getSliderValue('internal_font_size_slider', ui);
         update();
     }
 
-    function changeExternalFontSize() {
-        _options.externalNodeFontSize = getSliderValue('external_font_size_slider');
+    function changeExternalFontSize(e, ui) {
+        _options.externalNodeFontSize = getSliderValue('external_font_size_slider', ui);
         update();
     }
 
-    function changeBranchDataFontSize() {
-        _options.branchDataFontSize = getSliderValue('branch_data_font_size_slider');
+    function changeBranchDataFontSize(e, ui) {
+        _options.branchDataFontSize = getSliderValue('branch_data_font_size_slider', ui);
         update();
     }
 
@@ -1871,8 +1876,8 @@ if (!d3) {
         return $('#' + id).is(':checked');
     }
 
-    function getSliderValue(id) {
-        return $('#' + id).slider('value');
+    function getSliderValue(id, ui) {
+        return ui.value;
     }
 
 
