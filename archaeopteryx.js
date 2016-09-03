@@ -19,7 +19,7 @@
  *
  */
 
-// v 0_38
+// v 0_42
 
 if (!d3) {
     throw "no d3";
@@ -60,6 +60,8 @@ if (!d3) {
     var _intervalId = 0;
     var _dataForVisualization = {};
     var _currentLabelColorVisualization = null;
+    var _dynahide_counter = 0;
+    var _dynahide_factor = 0;
 
 
     function preOrderTraversal(n, fn) {
@@ -150,6 +152,10 @@ if (!d3) {
         }
     }
 
+    function calcMaxTreeLenghtForDisplay() {
+        return _settings.rootOffset + _options.nodeLabelGap + ( _maxLabelLength * 10 );
+    }
+
 
     function update(source, transitionDuration) {
 
@@ -161,8 +167,9 @@ if (!d3) {
         }
 
         var nodes_ary = _tree(_treeData);
+        var w = _displayWidth - calcMaxTreeLenghtForDisplay();
 
-        _tree = _tree.size([_displayHeight, _displayWidth - (_settings.rootOffset + _maxLabelLength * 10)]);
+        _tree = _tree.size([_displayHeight, w]);
 
         _tree = _tree.separation(function separation(a, b) {
             return a.parent == b.parent ? 1 : 1;
@@ -170,8 +177,8 @@ if (!d3) {
 
         var nodes = _tree.nodes(_root).reverse();
         var links = _tree.links(nodes);
+        var gap = _options.nodeLabelGap;
 
-        var w = _displayWidth - (_settings.rootOffset + _maxLabelLength * 10);
         if (_options.phylogram === true) {
             _yScale = branchLengthScaling(nodes_ary, w);
         }
@@ -179,6 +186,11 @@ if (!d3) {
             d3.scale.linear()
                 .domain([0, w])
                 .range([0, w]);
+        }
+
+        if (_options.dynahide) {
+            _dynahide_counter = 0;
+            _dynahide_factor = Math.round(_options.externalNodeFontSize / ( 0.8 * _displayHeight / calcExternalNodes(_root)));
         }
 
         var node = _svgGroup.selectAll("g.node")
@@ -207,7 +219,7 @@ if (!d3) {
         nodeEnter.append("text")
             .attr("class", "extlabel")
             .attr("x", function (d) {
-                return d.children || d._children ? -10 : 10;
+                return d.children || d._children ? -gap : gap;
             })
             // .style("fill", makeLabelColor)
             .attr("text-anchor", function (d) {
@@ -222,13 +234,19 @@ if (!d3) {
             .attr("class", "conflabel")
             .attr("text-anchor", "middle");
 
+        nodeEnter.append("text")
+            .attr("class", "collapsedText")
+            .attr("dy", function (d) {
+                return 0.3 * _options.externalNodeFontSize + "px";
+            });
+
         node.select("text.extlabel")
             .style("font-size", function (d) {
-                return d.children || d._children ? _options.internalNodeFontSize + "px" : _options.externalNodeFontSize + "px"
+                return d.children || d._children ? _options.internalNodeFontSize + "px" : _options.externalNodeFontSize + "px";
             })
             .style("fill", makeLabelColor)
-            .attr("y", function (d) {
-                return d.children || d._children ? 0.3 * _options.internalNodeFontSize : 0.3 * _options.externalNodeFontSize
+            .attr("dy", function (d) {
+                return d.children || d._children ? 0.3 * _options.internalNodeFontSize + "px" : 0.3 * _options.externalNodeFontSize + "px";
             });
 
         node.select("text.bllabel")
@@ -257,16 +275,10 @@ if (!d3) {
 
 
         node.select("circle.nodeCircle")
-
             .attr("r", function (d) {
                 return ( ( _options.internalNodeSize > 0 && d.parent )
-                &&
-                (
-                    ( ( d._children || d.children ) && _options.showInternalNodes  )
-
-                    ||
-                    ( ( !d._children && !d.children ) && _options.showExternalNodes  )
-
+                && ( ( d.children && _options.showInternalNodes  )
+                    || ( ( !d._children && !d.children ) && _options.showExternalNodes  )
                 ) ) ? _options.internalNodeSize : 0;
             })
             .style("stroke", makeNodeColor)
@@ -274,6 +286,73 @@ if (!d3) {
             .style("fill", function (d) {
                 return d._children ? makeNodeColor(d) : _options.backgroundColorDefault;
             });
+
+        nodeEnter.append("path")
+            .attr("d", function (d) {
+                return "M" + 0 + "," + 0 + "L" + 0 + "," + 0 + "L" + 0 + "," + 0 + "L" + 0 + "," + 0;
+            });
+
+        node.each(function (d) {
+            if (d._children) {
+                var descs = getAllExternalDescendants(d);
+                var avg = calculateAverageTreeHeight(d, descs);
+                var first;
+                var last;
+                if (descs.length > 1) {
+                    first = descs[0];
+                    last = descs[descs.length - 1];
+                }
+                var xlength = _options.phylogram ? _yScale(avg) : 0;
+                var start = _options.phylogram ? (-1) : (-10);
+                var ylength = 10;
+
+                var l = d.width ? (d.width / 2) : _options.branchWidthDefault / 2;
+                d3.select(this).select("path").transition().duration(transitionDuration)
+                    .attr("d", function (d) {
+                        return "M" + start + "," + (-l) + "L" + xlength + "," + (-ylength) + "L" + xlength + "," + (ylength) + "L" + start + "," + l + "L" + start + "," + (-l);
+                    })
+                    .style("fill", makeCollapsedColor(d));
+                d3.select(this).select(".collapsedText").attr("font-size", function (d) {
+                    return _options.externalNodeFontSize + "px";
+                });
+                d3.select(this).select(".collapsedText").transition().duration(transitionDuration)
+                    .style("fill-opacity", 1)
+                    .text(function (d) {
+                        var text = "";
+                        if (first && last) {
+                            var first_label = makeExtNodeLabel(first, true);
+                            var last_label = makeExtNodeLabel(last, true);
+                            if (first_label && last_label) {
+                                text = first_label.substring(0, _options.collapasedLabelLength)
+                                    + " ... " + last_label.substring(0, _options.collapasedLabelLength)
+                                    + " (" + descs.length + ")";
+                            }
+                            else {
+                                text = "(" + descs.length + ")";
+                            }
+                        }
+                        return text;
+                    })
+                    .style("fill", function (d) {
+                        return makeLabelColor(d);
+                    })
+                    .attr("x", function (d) {
+                        return xlength + gap;
+                    });
+            }
+            if (d.children) {
+                d3.select(this).select("path").transition().duration(transitionDuration)
+                    .attr("d", function (d) {
+                        return "M" + 0 + "," + 0 + "L" + 0 + "," + 0 + "L" + 0 + "," + 0 + "L" + 0 + "," + 0;
+                    });
+                d3.select(this).select(".collapsedText").transition().duration(transitionDuration)
+                    .attr("x", 0)
+                    .style("fill-opacity", 1e-6)
+                    .each("end", function () {
+                        d3.select(this).text("")
+                    });
+            }
+        });
 
         var nodeUpdate = node.transition()
             .duration(transitionDuration)
@@ -292,6 +371,7 @@ if (!d3) {
 
         nodeUpdate.select("text.conflabel")
             .text(_options.showConfidenceValues ? makeConfidenceValuesLabel : null);
+
 
         var nodeExit = node.exit().transition()
             .duration(0)
@@ -384,6 +464,14 @@ if (!d3) {
         return _options.branchColorDefault;
     };
 
+    var makeCollapsedColor = function (phynode) {
+        if (phynode.color) {
+            var c = phynode.color;
+            return "rgb(" + c.red + "," + c.green + "," + c.blue + ")";
+        }
+        return _options.branchColorDefault;
+    };
+
     var makeLabelColor = function (phynode) {
         if (_foundNodes0 && _foundNodes1 && _foundNodes0.has(phynode) && _foundNodes1.has(phynode)) {
             return _options.found0and1ColorDefault;
@@ -456,11 +544,9 @@ if (!d3) {
     }
 
 
-    var _dynahide_counter = 0;
-    var _dynahide_factor = 3;
+    var makeExtNodeLabel = function (phynode, labelIsForCollapsed) {
 
-    var makeExtNodeLabel = function (phynode) {
-
+        // if (labelIsForCollapsed===undefined || !labelIsForCollapsed) {
         if (!_options.showExternalLabels && !phynode.children) {
             return null;
         }
@@ -468,12 +554,13 @@ if (!d3) {
             return null;
         }
 
-        if (_options.dynahide && !phynode.children) {
+        if (_options.dynahide && !phynode.children && _dynahide_factor >= 2) {
             if (++_dynahide_counter % _dynahide_factor !== 0) {
                 console.log("c=" + _dynahide_counter);
-                return null;
+                return;
             }
         }
+        // }
 
         var l = "";
         if (_options.showNodeName) {
@@ -560,7 +647,7 @@ if (!d3) {
 
     var makeBranchLengthLabel = function (phynode) {
         if (phynode.branch_length && phynode.branch_length != 0) {
-            if ( _options.phylogram
+            if (_options.phylogram
                 && _options.minBranchLengthValueToShow
                 && phynode.branch_length < _options.minBranchLengthValueToShow) {
                 return;
@@ -708,6 +795,12 @@ if (!d3) {
         }
         if (!_options.branchDataFontSize) {
             _options.branchDataFontSize = 7;
+        }
+        if (!_options.collapasedLabelLength) {
+            _options.collapasedLabelLength = 7;
+        }
+        if (!_options.nodeLabelGap) {
+            _options.nodeLabelGap = 10;
         }
         if (!_options.minBranchLengthValueToShow) {
             _options.minBranchLengthValueToShow = null;
@@ -947,13 +1040,16 @@ if (!d3) {
                         var property = n.properties[i];
                         if (property.ref && property.value) {
                             if (property.unit) {
-                                text +=  property.ref + ": " + property.value + property.unit + "<br>";
+                                text += property.ref + ": " + property.value + property.unit + "<br>";
                             }
                             else {
-                                text +=  property.ref + ": " + property.value + "<br>";
+                                text += property.ref + ": " + property.value + "<br>";
                             }
                         }
                     }
+                }
+                if (n.children || n._children) {
+                    text += "Number of External Nodes: " + calcExternalNodes(n) + "<br>";
                 }
 
                 $("<div id='node_data'>" + text + "</div>").dialog();
@@ -994,18 +1090,6 @@ if (!d3) {
                 }
             }
 
-            function calcExternalNodes(node) {
-                if (!node.children) {
-                    return 1;
-                }
-                var c = node.children;
-                var l = c.length;
-                var cc = 0;
-                for (var i = 0; i < l; ++i) {
-                    cc += calcExternalNodes(c[i]);
-                }
-                return cc;
-            }
 
             function orderSubtree(n, order) {
                 var changed = false;
@@ -1391,7 +1475,7 @@ if (!d3) {
 
     function zoomOutX() {
         _displayWidth = _displayWidth * BUTTON_ZOOM_OUT_FACTOR;
-        var min = 0.75 * ( _settings.displayWidth - _maxLabelLength - _settings.rootOffset );
+        var min = 0.6 * ( _settings.displayWidth - calcMaxTreeLenghtForDisplay() );
         if (_displayWidth < min) {
             _displayWidth = min;
         }
@@ -2174,6 +2258,52 @@ if (!d3) {
         throw "unexpected exception: Could not determine the child index for a node";
     }
 
+
+    function calcExternalNodes(node) {
+        if (!node.children) {
+            return 1;
+        }
+        var c = node.children;
+        var l = c.length;
+        var cc = 0;
+        for (var i = 0; i < l; ++i) {
+            cc += calcExternalNodes(c[i]);
+        }
+        return cc;
+    }
+
+    function getAllExternalDescendants(node) {
+
+        var c = getChildren(node);
+
+        if (!c || c.length < 1) {
+            return [node];
+        }
+
+        var l = c.length;
+        var cc = [];
+        for (var i = 0; i < l; ++i) {
+            cc = cc.concat(getAllExternalDescendants(c[i]));
+        }
+        return cc;
+    }
+
+    function calculateAverageTreeHeight(node, externalDescendants) {
+
+        var c = externalDescendants ? externalDescendants : getAllExternalDescendants(node);
+        var l = c.length;
+        var s = 0;
+        for (var i = 0; i < l; ++i) {
+            var cc = c[i];
+            while (cc != node) {
+                if (cc.branch_length > 0) {
+                    s += cc.branch_length;
+                }
+                cc = cc.parent;
+            }
+        }
+        return s / l;
+    }
 
     // --------------------------------------------------------------
 
