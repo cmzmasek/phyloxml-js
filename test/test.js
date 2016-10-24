@@ -47,7 +47,6 @@ console.log("Phylogeny          : " + ( testPhylogeny() === true ? "pass" : "FAI
 console.log("Clade Relation     : " + ( testCladeRelation() === true ? "pass" : "FAIL" ));
 console.log("Sequence Relation  : " + ( testSequenceRelation() === true ? "pass" : "FAIL" ));
 console.log("UTF8               : " + ( testUTF8() === true ? "pass" : "FAIL" ));
-console.log("SC                 : " + ( testSC() === true ? "pass" : "FAIL" ));
 
 
 function readPhyloXmlFromFile(fileName) {
@@ -1024,14 +1023,6 @@ function testUTF8() {
     if (s[6] !== "Tiếng Việt") {
         return false;
     }
-    return true;
-}
-
-
-function testSC() {
-    var phys = readPhyloXmlFromFile("C:/Users/czmasek/Dropbox/Public/phyloxml_trees/sample.xml");
-    var phy = phys[0];
-    
     return true;
 }
 
