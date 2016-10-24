@@ -44,7 +44,10 @@ console.log("Taxonomy           : " + ( testTaxonomy() === true ? "pass" : "FAIL
 console.log("URI                : " + ( testUri() === true ? "pass" : "FAIL" ));
 console.log("Clade              : " + ( testClade() === true ? "pass" : "FAIL" ));
 console.log("Phylogeny          : " + ( testPhylogeny() === true ? "pass" : "FAIL" ));
+console.log("Clade Relation     : " + ( testCladeRelation() === true ? "pass" : "FAIL" ));
+console.log("Sequence Relation  : " + ( testSequenceRelation() === true ? "pass" : "FAIL" ));
 console.log("UTF8               : " + ( testUTF8() === true ? "pass" : "FAIL" ));
+console.log("SC                 : " + ( testSC() === true ? "pass" : "FAIL" ));
 
 
 function readPhyloXmlFromFile(fileName) {
@@ -893,13 +896,113 @@ function testPhylogeny() {
     return true;
 }
 
+function testCladeRelation() {
+    var phys = readPhyloXmlFromFile(t1);
+    var phy = phys[2];
+    if (!phy.clade_relations) {
+        return false;
+    }
+    if (phy.clade_relations.length != 2) {
+        return false;
+    }
+    var cl0 = phy.clade_relations[0];
+    var cl1 = phy.clade_relations[1];
+    if (cl0.id_ref_0 !== "i0") {
+        return false;
+    }
+    if (cl0.id_ref_1 !== "i1") {
+        return false;
+    }
+    if (cl0.distance !== 0.34) {
+        return false;
+    }
+    if (cl0.type !== "parent") {
+        return false;
+    }
+    if (cl0.confidence.type !== "pp") {
+        return false;
+    }
+    if (cl0.confidence.stddev !== 1.1e-10) {
+        return false;
+    }
+    if (cl0.confidence.value !== 1e-3) {
+        return false;
+    }
+    if (cl1.id_ref_0 !== "i1") {
+        return false;
+    }
+    if (cl1.id_ref_1 !== "i0") {
+        return false;
+    }
+    if (cl1.distance !== 2) {
+        return false;
+    }
+    if (cl1.confidence.value !== 1e-4) {
+        return false;
+    }
+    return true;
+}
+
+function testSequenceRelation() {
+    var phys = readPhyloXmlFromFile(t1);
+    var phy = phys[0];
+    if (!phy.sequence_relations) {
+        return false;
+    }
+    if (phy.sequence_relations.length != 2) {
+        return false;
+    }
+    var s0 = phy.sequence_relations[0];
+    var s1 = phy.sequence_relations[1];
+    if (s0.id_ref_0 !== "abc") {
+        return false;
+    }
+    if (s0.id_ref_1 !== "xyz") {
+        return false;
+    }
+
+    if (s0.distance !== 0.34) {
+        return false;
+    }
+
+    if (s0.type !== "ultra_paralogy") {
+        return false;
+    }
+    if (s0.confidence.type !== "pp") {
+        return false;
+    }
+    if (s0.confidence.stddev !== 1.1e-10) {
+        return false;
+    }
+    if (s0.confidence.value !== 1e-3) {
+        return false;
+    }
+    if (s1.confidence.stddev !== 1.245836) {
+        return false;
+    }
+    if (s1.confidence.value !== 99.0000001) {
+        console.log(s1.confidence.value);
+        return false;
+    }
+    if (s1.id_ref_0 !== "xyz") {
+        return false;
+    }
+    if (s1.id_ref_1 !== "abc") {
+        return false;
+    }
+    if (s1.distance !== 2) {
+        return false;
+    }
+    return true;
+}
+
 function testUTF8() {
     var phys = readPhyloXmlFromFile(t1);
     var root = findByName(phys[0], "root node")[0];
     if (root.taxonomies.length != 2) {
         return false;
     }
-    var s = root.taxonomies[1].synonyms
+    var s = root.taxonomies[1].synonyms;
     if (s[0] !== "Æ Ä ä, ö and ü>– —") {
         return false;
     }
@@ -921,6 +1024,14 @@ function testUTF8() {
     if (s[6] !== "Tiếng Việt") {
         return false;
     }
+    return true;
+}
+
+
+function testSC() {
+    var phys = readPhyloXmlFromFile("C:/Users/czmasek/Dropbox/Public/phyloxml_trees/sample.xml");
+    var phy = phys[0];
+    
     return true;
 }
 
