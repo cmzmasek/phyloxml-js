@@ -47,6 +47,7 @@ console.log("Phylogeny          : " + ( testPhylogeny() === true ? "pass" : "FAI
 console.log("Clade Relation     : " + ( testCladeRelation() === true ? "pass" : "FAIL" ));
 console.log("Sequence Relation  : " + ( testSequenceRelation() === true ? "pass" : "FAIL" ));
 console.log("UTF8               : " + ( testUTF8() === true ? "pass" : "FAIL" ));
+console.log("Roundtrip          : " + ( testRoundtrip() === true ? "pass" : "FAIL" ));
 
 
 function readPhyloXmlFromFile(fileName) {
@@ -58,7 +59,7 @@ function readPhyloXmlFromFile(fileName) {
 function findByName(clade, name) {
     var found_clades = [];
     var findByName = function (clade) {
-        if (clade.name == name) {
+        if (clade.name === name) {
             found_clades.push(clade);
         }
     };
@@ -821,7 +822,7 @@ function testPhylogeny() {
     if (!phys) {
         return false;
     }
-    if (phys.length !== 3) {
+    if (phys.length !== 4) {
         return false;
     }
     var phy = phys[0];
@@ -1023,6 +1024,329 @@ function testUTF8() {
     if (s[6] !== "Tiếng Việt") {
         return false;
     }
+    return true;
+}
+
+function testRoundtrip() {
+    var phys = readPhyloXmlFromFile(t1);
+    var phy0 = phys[3];
+
+    var parser = phyloxml_parser.phyloXmlParser;
+
+    var x0 = parser.toPhyloXML(phy0, 6);
+    var phy1 = parser.parse(x0)[0];
+    var x1 = parser.toPhyloXML(phy1, 6);
+    var phy2 = parser.parse(x1)[0];
+    if (phy2.rooted !== false) {
+        return false;
+    }
+    if (phy2.rerootable !== false) {
+        return false;
+    }
+    if (phy2.branch_length_unit !== "c") {
+        return false;
+    }
+    if (phy2.type !== "gene_tree") {
+        return false;
+    }
+
+    var root = findByName(phy2, "rootnode")[0];
+
+    // Accession
+    var acc = root.sequences[0].accession;
+    if (acc.value !== "Q9BZR8") {
+        return false;
+    }
+    if (acc.source !== "UniProtKB") {
+        return false;
+    }
+    if (acc.comment !== "outdated") {
+        return false;
+    }
+
+    // Color
+    var col = root.color;
+    if (col.red !== 0) {
+        return false;
+    }
+    if (col.green !== 22) {
+        return false;
+    }
+    if (col.blue !== 33) {
+        return false;
+    }
+    if (col.alpha !== 123) {
+        return false;
+    }
+
+    // Confidences
+    if (root.confidences.length != 3) {
+        return false;
+    }
+    if (root.confidences[0].type !== "bootstrap") {
+        return false;
+    }
+    if (root.confidences[0].value !== 90) {
+        return false;
+    }
+    if (root.confidences[1].type !== "ml") {
+        return false;
+    }
+    if (root.confidences[1].value !== 1e-3) {
+        return false;
+    }
+    if (root.confidences[1].stddev !== 1.1e-10) {
+        return false;
+    }
+    if (root.confidences[2].type !== "decay") {
+        return false;
+    }
+    if (root.confidences[2].value !== 2) {
+        return false;
+    }
+
+    // Id
+    var ta0 = root.taxonomies[0];
+    if (!ta0.id) {
+        return false;
+    }
+    if (ta0.id.provider !== "ncbi") {
+        return false;
+    }
+    if (ta0.id.value !== "1") {
+        return false;
+    }
+
+    // Sequence
+    if (root.sequences.length != 2) {
+        return false;
+    }
+    if (root.sequences[1].symbol !== "BCL2") {
+        return false;
+    }
+    var seq = root.sequences[0];
+    if (seq.type !== "protein") {
+        return false;
+    }
+    if (seq.id_source !== "idsource") {
+        return false;
+    }
+    if (seq.symbol !== "BCL2L14") {
+        return false;
+    }
+    if (seq.accession.value !== "Q9BZR8") {
+        return false;
+    }
+    if (seq.name !== "Apoptosis facilitator Bcl-2-like 14 protein") {
+        return false;
+    }
+    if (seq.gene_name !== "bcl2l14") {
+        return false;
+    }
+    if (seq.location !== "12p13-p12") {
+        return false;
+    }
+    if (!seq.mol_seq) {
+        return false;
+    }
+    if (seq.mol_seq.is_aligned !== true) {
+        return false;
+    }
+    if (seq.mol_seq.value !== "MCSTSGCDLEEIPLDDDDLNTIEFKILAYY") {
+        return false;
+    }
+
+    // Taxonomy
+    if (root.taxonomies.length != 2) {
+        return false;
+    }
+    var t0 = root.taxonomies[0];
+    if (t0.id_source !== "qwerty1") {
+        return false;
+    }
+    if (t0.id.provider !== "ncbi") {
+        return false;
+    }
+    if (t0.id.value !== "1") {
+        return false;
+    }
+    if (t0.code !== "ECDYS") {
+        return false;
+    }
+    if (t0.scientific_name !== "ecdysozoa") {
+        return false;
+    }
+    if (t0.authority !== "authority, 1999 < \" ' & >") {
+        return false;
+    }
+    if (t0.common_name !== "molting animals <") {
+        return false;
+    }
+    if (t0.synonyms.length != 2) {
+        return false;
+    }
+    if (t0.synonyms[0] !== "Ecdy") {
+        return false;
+    }
+    if (t0.synonyms[1] !== "The Ecdysozoa") {
+        return false;
+    }
+    if (t0.rank !== "phylum") {
+        return false;
+    }
+
+    // UTF8
+    var utf = root.taxonomies[1].synonyms;
+    if (utf[0] !== "Æ Ä ä, ö and ü>– —") {
+        return false;
+    }
+
+    if (utf[1] !== "한글") {
+        return false;
+    }
+    if (utf[2] !== "日本語ひらがなカタカナ") {
+        return false;
+    }
+    if (utf[3] !== "русский алфавит") {
+        return false;
+    }
+    if (utf[4] !== "繁體字") {
+        return false;
+    }
+    if (utf[5] !== "ภาษาไทย") {
+        return false;
+    }
+    if (utf[6] !== "Tiếng Việt") {
+        return false;
+    }
+
+    // Clade
+    if (root.branch_length !== 0.1) {
+        return false;
+    }
+    if (root.id_source !== "id111") {
+        return false;
+    }
+    if (root.collapse !== true) {
+        return false;
+    }
+    if (root.name !== "rootnode") {
+        return false;
+    }
+    if (root.confidences.length != 3) {
+        return false;
+    }
+    if (root.confidences[0].type !== "bootstrap") {
+        return false;
+    }
+    if (root.confidences[0].value !== 90) {
+        return false;
+    }
+    if (root.confidences[1].type !== "ml") {
+        return false;
+    }
+    if (root.confidences[1].value !== 1e-3) {
+        return false;
+    }
+    if (root.confidences[2].type !== "decay") {
+        return false;
+    }
+    if (root.confidences[2].value !== 2) {
+        return false;
+    }
+    if (root.width !== 10.5) {
+        return false;
+    }
+
+    //Properties
+    var props = root.properties;
+    if (props.length !== 4) {
+        return false;
+    }
+    var p0 = props[0];
+    var p1 = props[1];
+    var p2 = props[2];
+    var p3 = props[3];
+
+    if (p0.ref !== "F:foo") {
+        return false;
+    }
+    if (p0.datatype !== "xsd:int") {
+        return false;
+    }
+    if (p0.applies_to !== "clade") {
+        return false;
+    }
+    if (p0.value !== '2') {
+        return false;
+    }
+
+    if (p1.ref !== "F:bar") {
+        return false;
+    }
+    if (p1.datatype !== "xsd:int") {
+        return false;
+    }
+    if (p1.applies_to !== "clade") {
+        return false;
+    }
+    if (p1.value !== '33') {
+        return false;
+    }
+
+    if (p2.ref !== "F:couldbeanything") {
+        return false;
+    }
+    if (p2.datatype !== "xsd:double") {
+        return false;
+    }
+    if (p2.applies_to !== "other") {
+        return false;
+    }
+    if (p2.value !== '2.34202') {
+        return false;
+    }
+    if (p2.unit !== 'my:unit') {
+        return false;
+    }
+
+    if (p3.ref !== "F:couldbeanything2") {
+        return false;
+    }
+    if (p3.datatype !== "xsd:double") {
+        return false;
+    }
+    if (p3.applies_to !== "other") {
+        return false;
+    }
+    if (p3.value !== '2.34202') {
+        return false;
+    }
+    if (p3.unit !== 'my:unit2') {
+        return false;
+    }
+    if (p3.id_ref !== 'qwerty1') {
+        return false;
+    }
+
+    // Events
+    var events = root.events;
+    if (!events) {
+        return false;
+    }
+    if (events.type !== "mixed") {
+        return false;
+    }
+    if (events.duplications !== 1) {
+        return false;
+    }
+    if (events.confidence.type !== "bs") {
+        return false;
+    }
+    if (events.confidence.value !== 99) {
+        return false;
+    }
+
     return true;
 }
 

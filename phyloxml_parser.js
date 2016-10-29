@@ -22,7 +22,7 @@
 
 /**
  *
- * Version 0.900 20161024
+ * Version 0.901 20161028
  *
  * This requires sax-js from https://github.com/isaacs/sax-js
  *
@@ -120,6 +120,7 @@
     var CONFIDENCE = 'confidence';
     var CONFIDENCE_TYPE_ATTR = 'type';
     var CONFIDENCE_STDDEV_ATTR = 'stddev';
+    var CONFIDENCES = 'confidences';
 
     // Cross References
     var CROSS_REFERENCES = 'cross_references';
@@ -144,7 +145,7 @@
     var EVENTS = 'events';
     var EVENTS_TYPE = 'type';
     var EVENTS_DUPLICATIONS = 'duplications';
-    var EVENTS_SPECIATIONs = 'speciations';
+    var EVENTS_SPECIATIONS = 'speciations';
     var EVENTS_LOSSES = 'losses';
 
     // Id
@@ -176,6 +177,7 @@
     var PROPERTY_UNIT_ATTR = 'unit';
     var PROPERTY_DATATYPE_ATTR = 'datatype';
     var PROPERTY_APPLIES_TO_ATTR = 'applies_to';
+    var PROPERTIES = 'properties';
 
     // Protein Domain
     var PROTEINDOMAIN = 'domain';
@@ -198,15 +200,20 @@
     var SEQUENCE_NAME = 'name';
     var SEQUENCE_GENE_NAME = 'gene_name';
     var SEQUENCE_LOCATION = 'location';
+    var SEQUENCES = 'sequences';
+
 
     // Taxonomy
     var TAXONOMY = 'taxonomy';
+    var TAXONOMY_ID_SOURCE_ATTR = 'id_source';
     var TAXONOMY_CODE = 'code';
     var TAXONOMY_SCIENTIFIC_NAME = 'scientific_name';
     var TAXONOMY_AUTHORITY = 'authority';
     var TAXONOMY_COMMON_NAME = 'common_name';
     var TAXONOMY_SYNONYM = 'synonym';
     var TAXONOMY_RANK = 'rank';
+    var TAXONOMIES = 'taxonomies';
+    var TAXONOMY_SYNONYMS = 'synonyms';
 
     // Uri
     var URI = 'uri';
@@ -238,6 +245,13 @@
     var _objectStack = null;
 
     // --------------------------------------------------------------
+    // Others
+    // --------------------------------------------------------------
+    var PROPERTY_REF_RE = /[a-zA-Z0-9_]+:\S+/;
+    var PROPERTY_UNIT_RE = /[a-zA-Z0-9_]+:\S+/;
+    var PROPERTY_DATATYPE_RE = /xsd:\S+/;
+
+    // --------------------------------------------------------------
     // Functions for object creation
     // --------------------------------------------------------------
     function newAccession(tag) {
@@ -249,6 +263,9 @@
         acc.value = null;
         acc.source = getAttribute(ACCESSION_SOURCE_ATTR, tag.attributes);
         acc.comment = getAttribute(ACCESSION_COMMENT_ATTR, tag.attributes);
+        if (!acc.source) {
+            acc.source = '?';
+        }
         if (parent === SEQUENCE) {
             getCurrentObject().accession = acc;
         }
@@ -278,9 +295,9 @@
             throw new PhyloXmlError("found branch color outside of clade");
         }
         var col = {};
-        col.red = null;
-        col.green = null;
-        col.blue = null;
+        col.red = 0;
+        col.green = 0;
+        col.blue = 0;
         getCurrentObject().color = col;
         _objectStack.push(col);
     }
@@ -340,7 +357,7 @@
         conf.stddev = getAttributeAsFloat(CONFIDENCE_STDDEV_ATTR, tag.attributes);
         var parent = _tagStack.get(1);
         if (parent === CLADE || parent === PHYLOGENY) {
-            addToArrayInCurrentObject('confidences', conf);
+            addToArrayInCurrentObject(CONFIDENCES, conf);
         }
         else if (parent === ANNOTATION || parent === EVENTS || parent === CLADE_RELATION || parent === SEQUENCE_RELATION) {
             getCurrentObject().confidence = conf;
@@ -420,7 +437,27 @@
         prop.datatype = getAttribute(PROPERTY_DATATYPE_ATTR, tag.attributes);
         prop.applies_to = getAttribute(PROPERTY_APPLIES_TO_ATTR, tag.attributes);
         prop.id_ref = getAttribute(PROPERTY_ID_REF_ATTR, tag.attributes);
-        addToArrayInCurrentObject('properties', prop);
+
+        if (!prop.ref) {
+            throw new PhyloXmlError('property ref is missing');
+        }
+        if (!prop.datatype) {
+            throw new PhyloXmlError('property data-type is missing');
+        }
+        if (!prop.applies_to) {
+            throw new PhyloXmlError('property applies-to is missing');
+        }
+        if (!PROPERTY_REF_RE.test(prop.ref)) {
+            throw new PhyloXmlError('property ref is ill-formatted: ' + prop.ref);
+        }
+        if (!PROPERTY_DATATYPE_RE.test(prop.datatype)) {
+            throw new PhyloXmlError('property data-type is ill-formatted: ' + prop.datatype);
+        }
+        if (prop.unit && !PROPERTY_UNIT_RE.test(prop.unit)) {
+            throw new PhyloXmlError('property unit is ill-formatted: ' + prop.unit);
+        }
+
+        addToArrayInCurrentObject(PROPERTIES, prop);
         _objectStack.push(prop);
     }
 
@@ -447,14 +484,14 @@
         seq.type = getAttribute(SEQUENCE_TYPE_ATTR, tag.attributes);
         seq.id_source = getAttribute(SEQUENCE_ID_SOURCE_ATTR, tag.attributes);
         seq.id_ref = getAttribute(SEQUENCE_ID_REF_ATTR, tag.attributes);
-        addToArrayInCurrentObject('sequences', seq);
+        addToArrayInCurrentObject(SEQUENCES, seq);
         _objectStack.push(seq);
     }
 
     function newTaxonomy(tag) {
         var tax = {};
-        tax.id_source = getAttribute(CLADE_ID_SOURCE_ATTR, tag.attributes);
-        addToArrayInCurrentObject('taxonomies', tax);
+        tax.id_source = getAttribute(TAXONOMY_ID_SOURCE_ATTR, tag.attributes);
+        addToArrayInCurrentObject(TAXONOMIES, tax);
         _objectStack.push(tax);
     }
 
@@ -470,7 +507,13 @@
     function newPhylogeny(tag) {
         var phy = {};
         phy.rooted = getAttributeAsBoolean(PHYLOGENY_ROOTED_ATTR, tag.attributes);
+        if (phy.rooted === undefined) {
+            phy.rooted = true;
+        }
         phy.rerootable = getAttributeAsBoolean(PHYLOGENY_REROOTABLE_ATTR, tag.attributes);
+        if (phy.rerootable === undefined) {
+            phy.rerootable = true;
+        }
         phy.branch_length_unit = getAttribute(PHYLOGENY_BRANCH_LENGTH_UNIT_ATTR, tag.attributes);
         phy.type = getAttribute(PHYLOGENY_TYPE_ATTR, tag.attributes);
         _objectStack.push(phy);
@@ -557,7 +600,7 @@
         else if (getCurrentTag() === EVENTS_DUPLICATIONS) {
             getCurrentObject().duplications = parseIntNumber(text);
         }
-        else if (getCurrentTag() === EVENTS_SPECIATIONs) {
+        else if (getCurrentTag() === EVENTS_SPECIATIONS) {
             getCurrentObject().speciations = parseIntNumber(text);
         }
         else if (getCurrentTag() === EVENTS_LOSSES) {
@@ -640,7 +683,7 @@
             getCurrentObject().common_name = text;
         }
         else if (getCurrentTag() === TAXONOMY_SYNONYM) {
-            addToArrayInCurrentObject('synonyms', text);
+            addToArrayInCurrentObject(TAXONOMY_SYNONYMS, text);
         }
         else if (getCurrentTag() === TAXONOMY_RANK) {
             getCurrentObject().rank = text;
@@ -1018,6 +1061,261 @@
     PhyloXmlError.prototype = Object.create(Error.prototype);
 
     // --------------------------------------------------------------
+    // To phyloXML
+    // --------------------------------------------------------------
+    phyloXmlParser.toPhyloXML = function (phy, dec) {
+        var x = '';
+        openPhyloXml();
+        openPhylogeny(phy, [PHYLOGENY_ROOTED_ATTR, PHYLOGENY_REROOTABLE_ATTR,
+            PHYLOGENY_BRANCH_LENGTH_UNIT_ATTR, PHYLOGENY_TYPE_ATTR]);
+        if (phy.children && phy.children.length === 1) {
+            toPhyloXMLhelper(phy.children[0]);
+        }
+        closePhylogeny();
+        closePhyloXml();
+        return x;
+
+        function toPhyloXMLhelper(node) {
+            var l;
+            var i;
+
+            openClade(node, [CLADE_ID_SOURCE_ATTR, CLADE_COLLAPSE_ATTR]);
+
+            addSingleElement(CLADE_NAME, node.name);
+
+            if (node[CLADE_BRANCH_LENGTH]) {
+                addSingleElement(CLADE_BRANCH_LENGTH, (dec && dec > 0) ? roundNumber(node[CLADE_BRANCH_LENGTH], dec) : node[CLADE_BRANCH_LENGTH]);
+            }
+
+            if (node[CONFIDENCES] && node[CONFIDENCES].length > 0) {
+                l = node[CONFIDENCES].length;
+                for (i = 0; i < l; ++i) {
+                    var conf = node[CONFIDENCES][i];
+                    if (!conf[CONFIDENCE_TYPE_ATTR]) {
+                        conf[CONFIDENCE_TYPE_ATTR] = '?';
+                    }
+                    addSingleElement(CONFIDENCE, conf.value, conf,
+                        [CONFIDENCE_TYPE_ATTR, CONFIDENCE_STDDEV_ATTR]);
+                }
+            }
+
+            addSingleElement(CLADE_WIDTH, node[CLADE_WIDTH]);
+
+            if (node[COLOR]) {
+                var col = node[COLOR];
+                open(COLOR);
+                addSingleElement(COLOR_RED, col[COLOR_RED]);
+                addSingleElement(COLOR_GREEN, col[COLOR_GREEN]);
+                addSingleElement(COLOR_BLUE, col[COLOR_BLUE]);
+                addSingleElement(COLOR_ALPHA, col[COLOR_ALPHA]);
+                close(COLOR);
+            }
+
+            if (node[TAXONOMIES] && node[TAXONOMIES].length > 0) {
+                l = node[TAXONOMIES].length;
+                for (i = 0; i < l; ++i) {
+                    var tax = node[TAXONOMIES][i];
+                    open(TAXONOMY, tax, [TAXONOMY_ID_SOURCE_ATTR]);
+                    if (tax[ID]) {
+                        if (!tax[ID][ID_PROVIDER_ATTR]) {
+                            tax[ID][ID_PROVIDER_ATTR] = '?';
+                        }
+                        addSingleElement(ID, tax[ID].value, tax[ID],
+                            [ID_PROVIDER_ATTR]);
+                    }
+                    addSingleElement(TAXONOMY_CODE, tax[TAXONOMY_CODE]);
+                    addSingleElement(TAXONOMY_SCIENTIFIC_NAME, tax[TAXONOMY_SCIENTIFIC_NAME]);
+                    addSingleElement(TAXONOMY_AUTHORITY, tax[TAXONOMY_AUTHORITY]);
+                    addSingleElement(TAXONOMY_COMMON_NAME, tax[TAXONOMY_COMMON_NAME]);
+                    if (tax[TAXONOMY_SYNONYMS] && tax[TAXONOMY_SYNONYMS].length > 0) {
+                        var ll = tax[TAXONOMY_SYNONYMS].length;
+                        for (var ii = 0; ii < ll; ++ii) {
+                            addSingleElement(TAXONOMY_SYNONYM, tax[TAXONOMY_SYNONYMS][ii]);
+                        }
+                    }
+                    addSingleElement(TAXONOMY_RANK, tax[TAXONOMY_RANK]);
+                    close(TAXONOMY);
+                }
+            }
+
+            if (node[SEQUENCES] && node[SEQUENCES].length > 0) {
+                l = node[SEQUENCES].length;
+                for (i = 0; i < l; ++i) {
+                    var seq = node[SEQUENCES][i];
+                    open(SEQUENCE, seq, [SEQUENCE_TYPE_ATTR, SEQUENCE_ID_SOURCE_ATTR, SEQUENCE_ID_REF_ATTR]);
+                    addSingleElement(SEQUENCE_SYMBOL, seq[SEQUENCE_SYMBOL]);
+                    if (seq[ACCESSION]) {
+                        if (!seq[ACCESSION][ACCESSION_SOURCE_ATTR]) {
+                            seq[ACCESSION][ACCESSION_SOURCE_ATTR] = '?';
+                        }
+                        addSingleElement(ACCESSION, seq[ACCESSION].value, seq[ACCESSION],
+                            [ACCESSION_SOURCE_ATTR, ACCESSION_COMMENT_ATTR]);
+                    }
+                    addSingleElement(SEQUENCE_NAME, seq[SEQUENCE_NAME]);
+                    addSingleElement(SEQUENCE_GENE_NAME, seq[SEQUENCE_GENE_NAME]);
+                    addSingleElement(SEQUENCE_LOCATION, seq[SEQUENCE_LOCATION]);
+                    if (seq[MOLSEQ]) {
+                        addSingleElement(MOLSEQ, seq[MOLSEQ].value, seq[MOLSEQ],
+                            [MOLSEQ_IS_ALIGNED_ATTR]);
+                    }
+                    close(SEQUENCE);
+                }
+            }
+
+            if (node[EVENTS]) {
+                var ev = node[EVENTS];
+                open(EVENTS);
+                addSingleElement(EVENTS_TYPE, ev[EVENTS_TYPE]);
+                addSingleElement(EVENTS_DUPLICATIONS, ev[EVENTS_DUPLICATIONS]);
+                addSingleElement(EVENTS_SPECIATIONS, ev[EVENTS_SPECIATIONS]);
+                addSingleElement(EVENTS_LOSSES, ev[EVENTS_LOSSES]);
+                if (ev[CONFIDENCE]) {
+                    var evconf = ev[CONFIDENCE];
+                    addSingleElement(CONFIDENCE, evconf.value, evconf,
+                        [CONFIDENCE_TYPE_ATTR, CONFIDENCE_STDDEV_ATTR]);
+                }
+                close(EVENTS);
+            }
+
+            if (node[PROPERTIES] && node[PROPERTIES].length > 0) {
+                l = node[PROPERTIES].length;
+                for (i = 0; i < l; ++i) {
+                    var prop = node[PROPERTIES][i];
+                    if (!prop[PROPERTY_APPLIES_TO_ATTR]) {
+                        throw new PhyloXmlError("property applies-to is missing");
+                    }
+                    if (!prop[PROPERTY_DATATYPE_ATTR]) {
+                        throw new PhyloXmlError("property data-type is missing");
+                    }
+                    if (!prop[PROPERTY_REF_ATTR]) {
+                        throw new PhyloXmlError("property ref is missing");
+                    }
+                    addSingleElement(PROPERTY, prop.value, prop, [PROPERTY_REF_ATTR,
+                        PROPERTY_UNIT_ATTR, PROPERTY_DATATYPE_ATTR, PROPERTY_APPLIES_TO_ATTR,
+                        PROPERTY_ID_REF_ATTR]);
+                }
+            }
+
+            if (node.children) {
+                l = node.children.length;
+                for (i = 0; i < l; ++i) {
+                    toPhyloXMLhelper(node.children[i]);
+                }
+            }
+            else if (node._children) {
+                l = node._children.length;
+                for (i = 0; i < l; ++i) {
+                    toPhyloXMLhelper(node._children[i]);
+                }
+            }
+
+            closeClade();
+
+        } // toPhyloXMLhelper
+
+        function addSingleElement(elemName, elemValue, object, attributeNames) {
+            if ( (elemValue !== null) && (elemValue !== undefined) ) {
+                if (typeof elemValue === 'string' || elemValue instanceof String) {
+                    elemValue = elemValue.trim();
+                    if (elemValue.length > 0) {
+                        if ((elemValue.indexOf('&') > -1) || ( elemValue.indexOf('<') > -1) || ( elemValue.indexOf('>') > -1)
+                            || (elemValue.indexOf('"') > -1) || ( elemValue.indexOf("'") > -1)) {
+                            elemValue = replaceUnsafeChars(elemValue);
+                        }
+                    }
+                    else {
+                        return;
+                    }
+                }
+                x += ( '<' + elemName);
+                if (object && attributeNames && attributeNames.length > 0) {
+                    addAttributes(object, attributeNames);
+                }
+                x += ( '>' + elemValue + '</' + elemName + '>\n');
+            }
+        }
+
+        function open(elemName, object, attributeNames) {
+            if (object && attributeNames && attributeNames.length > 0) {
+                x += ( '<' + elemName);
+                addAttributes(object, attributeNames);
+                x += '>\n';
+            }
+            else {
+                x += ( '<' + elemName + '>\n' );
+            }
+        }
+
+        function close(elemName) {
+            x += ( '</' + elemName + '>\n' );
+        }
+
+        function openClade(object, attributeNames) {
+            if (object && attributeNames && attributeNames.length > 0) {
+                x += '<clade';
+                addAttributes(object, attributeNames);
+                x += '>\n';
+            }
+            else {
+                x += '<clade>\n';
+            }
+        }
+
+        function closeClade() {
+            x += '</clade>\n';
+        }
+
+        function openPhylogeny(object, attributeNames) {
+            if (object && attributeNames && attributeNames.length > 0) {
+                x += '<phylogeny';
+                addAttributes(object, attributeNames);
+                x += '>\n';
+            }
+            else {
+                x += '<phylogeny>\n';
+            }
+        }
+
+        function closePhylogeny() {
+            x += '</phylogeny>\n';
+        }
+
+        function openPhyloXml() {
+            x += '<?xml version="1.0" encoding="UTF-8"?>\n';
+            x += '<phyloxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.phyloxml.org http://www.phyloxml.org/1.20/phyloxml.xsd" xmlns="http://www.phyloxml.org">\n';
+        }
+
+        function closePhyloXml() {
+            x += '</phyloxml>\n';
+        }
+
+        function addAttributes(object, attributeNames) {
+            var l = attributeNames.length;
+            for (var i = 0; i < l; ++i) {
+                var attributeName = attributeNames[i];
+                if (attributeName && ( object[attributeName] !== undefined && object[attributeName] !== null )) {
+                    x += (' ' + attributeName + '="' + object[attributeName] + '"' );
+                }
+            }
+        }
+
+        function roundNumber(num, dec) {
+            return Math.round(num * Math.pow(10, dec)) / Math.pow(10, dec);
+        }
+
+        function replaceUnsafeChars(str) {
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&apos;");
+        }
+
+    }; // toPhyloXML
+
+
+    // --------------------------------------------------------------
     // Main functions
     // --------------------------------------------------------------
     phyloXmlParser.parseAsync = function (stream, parse_options) {
@@ -1043,6 +1341,7 @@
             stream.resume();
         });
     };
+
 
     phyloXmlParser.parse = function (source, parse_options) {
         source && ( source = source.toString().trim());
