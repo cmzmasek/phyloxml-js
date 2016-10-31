@@ -22,7 +22,7 @@
 
 /**
  *
- * Version 0.901 20161028
+ * Version 0.901 20161031
  *
  * This requires sax-js from https://github.com/isaacs/sax-js
  *
@@ -1065,9 +1065,11 @@
     // --------------------------------------------------------------
     phyloXmlParser.toPhyloXML = function (phy, dec) {
         var x = '';
+        var ind = '';
         openPhyloXml();
         openPhylogeny(phy, [PHYLOGENY_ROOTED_ATTR, PHYLOGENY_REROOTABLE_ATTR,
             PHYLOGENY_BRANCH_LENGTH_UNIT_ATTR, PHYLOGENY_TYPE_ATTR]);
+
         if (phy.children && phy.children.length === 1) {
             toPhyloXMLhelper(phy.children[0]);
         }
@@ -1214,7 +1216,7 @@
         } // toPhyloXMLhelper
 
         function addSingleElement(elemName, elemValue, object, attributeNames) {
-            if ( (elemValue !== null) && (elemValue !== undefined) ) {
+            if ((elemValue !== null) && (elemValue !== undefined)) {
                 if (typeof elemValue === 'string' || elemValue instanceof String) {
                     elemValue = elemValue.trim();
                     if (elemValue.length > 0) {
@@ -1227,7 +1229,7 @@
                         return;
                     }
                 }
-                x += ( '<' + elemName);
+                x += ( ind + '<' + elemName);
                 if (object && attributeNames && attributeNames.length > 0) {
                     addAttributes(object, attributeNames);
                 }
@@ -1237,50 +1239,57 @@
 
         function open(elemName, object, attributeNames) {
             if (object && attributeNames && attributeNames.length > 0) {
-                x += ( '<' + elemName);
+                x += ( ind + '<' + elemName);
                 addAttributes(object, attributeNames);
                 x += '>\n';
             }
             else {
-                x += ( '<' + elemName + '>\n' );
+                x += (ind + '<' + elemName + '>\n' );
             }
+            ind = ind + ' ';
         }
 
         function close(elemName) {
-            x += ( '</' + elemName + '>\n' );
+            reduceInd();
+            x += ( ind + '</' + elemName + '>\n' );
         }
 
         function openClade(object, attributeNames) {
             if (object && attributeNames && attributeNames.length > 0) {
-                x += '<clade';
+                x += ind + '<clade';
                 addAttributes(object, attributeNames);
                 x += '>\n';
             }
             else {
-                x += '<clade>\n';
+                x += ind + '<clade>\n';
             }
+            ind = ind + ' ';
         }
 
         function closeClade() {
-            x += '</clade>\n';
+            reduceInd();
+            x += ind + '</clade>\n';
         }
 
         function openPhylogeny(object, attributeNames) {
             if (object && attributeNames && attributeNames.length > 0) {
-                x += '<phylogeny';
+                x += ' <phylogeny';
                 addAttributes(object, attributeNames);
                 x += '>\n';
             }
             else {
-                x += '<phylogeny>\n';
+                x += ' <phylogeny>\n';
             }
+            ind = '  ';
         }
 
         function closePhylogeny() {
-            x += '</phylogeny>\n';
+            ind = ' ';
+            x += ' </phylogeny>\n';
         }
 
         function openPhyloXml() {
+            ind = '';
             x += '<?xml version="1.0" encoding="UTF-8"?>\n';
             x += '<phyloxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.phyloxml.org http://www.phyloxml.org/1.20/phyloxml.xsd" xmlns="http://www.phyloxml.org">\n';
         }
@@ -1310,6 +1319,14 @@
                 .replace(/>/g, "&gt;")
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&apos;");
+        }
+
+        function reduceInd() {
+            var l = ind.length;
+            ind = '';
+            for (var i = 0; i <= l - 2; ++i) {
+                ind += ' ';
+            }
         }
 
     }; // toPhyloXML

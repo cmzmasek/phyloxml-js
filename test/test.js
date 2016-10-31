@@ -1034,6 +1034,7 @@ function testRoundtrip() {
     var parser = phyloxml_parser.phyloXmlParser;
 
     var x0 = parser.toPhyloXML(phy0, 6);
+
     var phy1 = parser.parse(x0)[0];
     var x1 = parser.toPhyloXML(phy1, 6);
     var phy2 = parser.parse(x1)[0];
