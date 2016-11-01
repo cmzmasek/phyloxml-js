@@ -100,7 +100,7 @@ const xml=
   </clade>\
 </phylogeny>\
 </phyloxml>";
-console.log('**************the string of xml*************')
+console.log('**************the string of xml*************');
  var phys = p.parse(xml, {trim: true, normalize: true});
 console.log("************************************");
 console.log(phys);
@@ -118,4 +118,4 @@ window.onload=function(){
 		//document.getElementById('parsed').innerText=JSON.stringify(phys);
 		document.getElementById('xml').innerText= xml;
 
-}
+};

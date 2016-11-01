@@ -23,7 +23,7 @@
 "use strict";
 
 var fs = require('fs');
-var phyloxml_parser = require('../phyloxml_parser');
+var phyloxml_parser = require('../phyloxml');
 
 var t1 = require('path').join(__dirname, "./data/phyloxml_test_1.xml");
 

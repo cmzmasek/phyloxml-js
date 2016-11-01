@@ -59,7 +59,7 @@
          </taxonomy>
          <sequence type="protein">
             <symbol>BCL2L14</symbol>
-            <accession source="UniProtKB">Q9BZR8</accession>
+            <accession source="UniProtKB" comment="outdated">Q9BZR8</accession>
             <name>Apoptosis facilitator Bcl-2-like 14 protein</name>
             <location>12p13-p12</location>
             <mol_seq is_aligned="false">MCSTSGCDLEEIPLDDDDLNTIEFKILAYY</mol_seq>

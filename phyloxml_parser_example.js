@@ -22,7 +22,7 @@
 
 "use strict";
 
-var phyloxml_parser = require('./phyloxml_parser');
+var phyloxml_parser = require('./phyloxml');
 var fs = require('fs');
 
 var a = require('path').join(__dirname, "./data/two_trees.xml");
@@ -41,12 +41,15 @@ function test(element, index) {
     var phys = p.parse(text, {trim: true, normalize: true});
 }
 
+//var xmlfile = require('path').join(__dirname, "./data/AtNBSpos.xml");
+//var xmlfile = require('path').join(__dirname, "./data/simple.xml");
 //var xmlfile = require('path').join(__dirname, "./data/two_trees.xml");
 //var xmlfile = require('path').join(__dirname, "./data/example_2.xml");
-var xmlfile = require('path').join(__dirname, "./data/apaf.xml");
+//var xmlfile = require('path').join(__dirname, "./data/apaf.xml");
 //var xmlfile = require('path').join(__dirname, "./data/amphi_frost.xml");
 //var xmlfile = require('path').join(__dirname, "./data/ncbi_taxonomy.xml");
 //var xmlfile = require('path').join(__dirname, "./data/phyloxml_test1.xml");
+var xmlfile = require('path').join(__dirname, "./data/H1_tree_June2016_colored_v2_.xml");
 
 
 // Synchronous parsing of phyloXML-formatted string:
@@ -61,7 +64,7 @@ console.log("Parsed " + len + " tree:");
 for (var i = 0; i < len; i++) {
     console.log();
     console.log("Tree " + i + ":");
-    var str = JSON.stringify(phys[i], null, 2);
+    var str = JSON.stringify(phys[i], null, 1);
     console.log(str);
 }
 
