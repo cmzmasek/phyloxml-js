@@ -22,7 +22,7 @@
 
 /**
  *
- * Version 0.901 20161031
+ * Version 0.902 20161031
  *
  * This requires sax-js from https://github.com/isaacs/sax-js
  *
@@ -1272,6 +1272,14 @@
         }
 
         function openPhylogeny(object, attributeNames) {
+            if (object[PHYLOGENY_ROOTED_ATTR] === undefined ||
+                object[PHYLOGENY_ROOTED_ATTR] === null) {
+                object[PHYLOGENY_ROOTED_ATTR] = true;
+            }
+            if (object[PHYLOGENY_REROOTABLE_ATTR] === undefined ||
+                object[PHYLOGENY_REROOTABLE_ATTR] === null) {
+                object[PHYLOGENY_REROOTABLE_ATTR] = true;
+            }
             if (object && attributeNames && attributeNames.length > 0) {
                 x += ' <phylogeny';
                 addAttributes(object, attributeNames);
