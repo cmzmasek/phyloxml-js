@@ -22,7 +22,7 @@
 
 "use strict";
 
-var phyloxml_parser = require('./phyloxml');
+var px = require('./phyloxml').phyloXml;
 var fs = require('fs');
 
 var a = require('path').join(__dirname, "./data/two_trees.xml");
@@ -32,42 +32,31 @@ var d = require('path').join(__dirname, "./data/amphi_frost.xml");
 var e = require('path').join(__dirname, "./data/phyloxml_test1.xml");
 var f = require('path').join(__dirname, "./data/phyloxml_test2.xml");
 
-var tests = [a,b,c,d,e,f].forEach(test);
+[a, b, c, d, e, f].forEach(test);
 
 function test(element, index) {
-    console.log( index );
+    console.log(index);
     var text = fs.readFileSync(element, 'utf8');
-    var p = phyloxml_parser.phyloXmlParser;
-    var phys = p.parse(text, {trim: true, normalize: true});
+    px.parse(text, {trim: true, normalize: true});
 }
 
-//var xmlfile = require('path').join(__dirname, "./data/AtNBSpos.xml");
-//var xmlfile = require('path').join(__dirname, "./data/simple.xml");
-//var xmlfile = require('path').join(__dirname, "./data/two_trees.xml");
-//var xmlfile = require('path').join(__dirname, "./data/example_2.xml");
-//var xmlfile = require('path').join(__dirname, "./data/apaf.xml");
-//var xmlfile = require('path').join(__dirname, "./data/amphi_frost.xml");
-//var xmlfile = require('path').join(__dirname, "./data/ncbi_taxonomy.xml");
-//var xmlfile = require('path').join(__dirname, "./data/phyloxml_test1.xml");
-var xmlfile = require('path').join(__dirname, "./data/H1_tree_June2016_colored_v2_.xml");
-
+var xmlfile = require('path').join(__dirname, "./data/H1_tree_June2016_colored.xml");
 
 // Synchronous parsing of phyloXML-formatted string:
 var text = fs.readFileSync(xmlfile, 'utf8');
 
-var p = phyloxml_parser.phyloXmlParser;
-
-var phys = p.parse(text, {trim: true, normalize: true});
+var phys = px.parse(text, {trim: true, normalize: true});
 
 var len = phys.length;
 console.log("Parsed " + len + " tree:");
 for (var i = 0; i < len; i++) {
     console.log();
     console.log("Tree " + i + ":");
-    var str = JSON.stringify(phys[i], null, 1);
+    var str = px.toPhyloXML(phys[i], 3);
     console.log(str);
 }
 
 // Asynchronous parsing of phyloXML-formatted stream:
 var stream = fs.createReadStream(xmlfile, {encoding: 'utf8'});
-p.parseAsync(stream, {trim: true, normalize: true});
+px.parseAsync(stream, {trim: true, normalize: true});
+

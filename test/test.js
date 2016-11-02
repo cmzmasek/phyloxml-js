@@ -23,7 +23,7 @@
 "use strict";
 
 var fs = require('fs');
-var phyloxml_parser = require('../phyloxml');
+var px = require('../phyloxml').phyloXml;
 
 var t1 = require('path').join(__dirname, "./data/phyloxml_test_1.xml");
 
@@ -52,8 +52,7 @@ console.log("Roundtrip          : " + ( testRoundtrip() === true ? "pass" : "FAI
 
 function readPhyloXmlFromFile(fileName) {
     var text = fs.readFileSync(fileName, 'utf8');
-    var p = phyloxml_parser.phyloXmlParser;
-    return p.parse(text, {trim: true, normalize: true});
+    return px.parse(text, {trim: true, normalize: true});
 }
 
 function findByName(clade, name) {
@@ -1030,14 +1029,12 @@ function testUTF8() {
 function testRoundtrip() {
     var phys = readPhyloXmlFromFile(t1);
     var phy0 = phys[3];
+    
+    var x0 = px.toPhyloXML(phy0, 6);
 
-    var parser = phyloxml_parser.phyloXmlParser;
-
-    var x0 = parser.toPhyloXML(phy0, 6);
-
-    var phy1 = parser.parse(x0)[0];
-    var x1 = parser.toPhyloXML(phy1, 6);
-    var phy2 = parser.parse(x1)[0];
+    var phy1 = px.parse(x0)[0];
+    var x1 = px.toPhyloXML(phy1, 6);
+    var phy2 = px.parse(x1)[0];
     if (phy2.rooted !== false) {
         return false;
     }
