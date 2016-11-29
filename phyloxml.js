@@ -22,7 +22,7 @@
 
 /**
  *
- * Version 0.910 20161102
+ * Version 0.911 20161129
  *
  * This requires sax-js from https://github.com/isaacs/sax-js
  *
@@ -79,15 +79,15 @@
     // --------------------------------------------------------------
     // phyloXML constants
     // --------------------------------------------------------------
-    
+
     //appType
     var APPTYPE = 'flu_type';
-    
+
     // Accession
     var ACCESSION = 'accession';
     var ACCESSION_SOURCE_ATTR = 'source';
     var ACCESSION_COMMENT_ATTR = 'comment';
-    
+
     // Annotation
     var ANNOTATION = 'annotation';
     var ANNOTATION_REF_ATTR = 'ref';
@@ -245,7 +245,7 @@
     var X_SIMPLE_CHARACTERISTIC_HOST = 'Host';
     var X_SIMPLE_CHARACTERISTIC_HA = 'HA';
     var X_SIMPLE_CHARACTERISTIC_NA = 'NA';
-    
+
     // --------------------------------------------------------------
     // Instance variables
     // --------------------------------------------------------------
@@ -551,7 +551,7 @@
             getCurrentObject().desc = text;
         }
     }
-    
+
     function inAppType(text) {
         if (getCurrentTag() === APPTYPE) {
             getCurrentObject().desc = text;
@@ -895,7 +895,7 @@
         }
         if (currentTag === ACCESSION) {
             inAccession(text);
-        }else if (currentTag === APPTYPE){
+        } else if (currentTag === APPTYPE) {
             inAppType(text);
         }
         else if (currentTag === CONFIDENCE) {
