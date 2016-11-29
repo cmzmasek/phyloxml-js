@@ -79,12 +79,15 @@
     // --------------------------------------------------------------
     // phyloXML constants
     // --------------------------------------------------------------
-
+    
+    //appType
+    var APPTYPE = 'flu_type';
+    
     // Accession
     var ACCESSION = 'accession';
     var ACCESSION_SOURCE_ATTR = 'source';
     var ACCESSION_COMMENT_ATTR = 'comment';
-
+    
     // Annotation
     var ANNOTATION = 'annotation';
     var ANNOTATION_REF_ATTR = 'ref';
@@ -240,7 +243,9 @@
     var X_SIMPLE_CHARACTERISTIC_COUNTRY = 'Country';
     var X_SIMPLE_CHARACTERISTIC_YEAR = 'Year';
     var X_SIMPLE_CHARACTERISTIC_HOST = 'Host';
-
+    var X_SIMPLE_CHARACTERISTIC_HA = 'HA';
+    var X_SIMPLE_CHARACTERISTIC_NA = 'NA';
+    
     // --------------------------------------------------------------
     // Instance variables
     // --------------------------------------------------------------
@@ -546,6 +551,12 @@
             getCurrentObject().desc = text;
         }
     }
+    
+    function inAppType(text) {
+        if (getCurrentTag() === APPTYPE) {
+            getCurrentObject().desc = text;
+        }
+    }
 
     function inBranchColor(text) {
         if (getCurrentTag() === COLOR_RED) {
@@ -710,6 +721,12 @@
         }
         else if (getCurrentTag() === X_SIMPLE_CHARACTERISTIC_YEAR) {
             getCurrentObject().year = text;
+        }
+        else if (getCurrentTag() === X_SIMPLE_CHARACTERISTIC_HA) {
+            getCurrentObject().ha = text;
+        }
+        else if (getCurrentTag() === X_SIMPLE_CHARACTERISTIC_NA) {
+            getCurrentObject().na = text;
         }
     }
 
@@ -878,6 +895,8 @@
         }
         if (currentTag === ACCESSION) {
             inAccession(text);
+        }else if (currentTag === APPTYPE){
+            inAppType(text);
         }
         else if (currentTag === CONFIDENCE) {
             inConfidence(text);
@@ -903,7 +922,6 @@
     }
 
     function phyloxmlOnerror(error) {
-        console.error(error);
         throw error;
     }
 
