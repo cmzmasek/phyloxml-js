@@ -264,6 +264,9 @@
     </phylogeny>
 
     <phylogeny branch_length_unit="c" rooted="false" rerootable="false" type="gene_tree">
+        <name>t3</name>
+        <description>test phylogeny</description>
+        <date>2002-05-30T09:30:10.5</date>
         <clade branch_length="0.1" id_source="id111" collapse="true">
             <name>rootnode</name>
             <confidence type="bootstrap">90</confidence>

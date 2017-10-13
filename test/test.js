@@ -1,6 +1,6 @@
 /**
- *  Copyright (C) 2016 Christian M. Zmasek
- *  Copyright (C) 2016 J. Craig Venter Institute
+ *  Copyright (C) 2017 Christian M. Zmasek
+ *  Copyright (C) 2017 J. Craig Venter Institute
  *  All rights reserved
  *
  *  This library is free software; you can redistribute it and/or
@@ -1029,7 +1029,7 @@ function testUTF8() {
 function testRoundtrip() {
     var phys = readPhyloXmlFromFile(t1);
     var phy0 = phys[3];
-    
+
     var x0 = px.toPhyloXML(phy0, 6);
 
     var phy1 = px.parse(x0)[0];
@@ -1045,6 +1045,15 @@ function testRoundtrip() {
         return false;
     }
     if (phy2.type !== "gene_tree") {
+        return false;
+    }
+    if (phy2.name !== 't3') {
+        return false;
+    }
+    if (phy2.description !== 'test phylogeny') {
+        return false;
+    }
+    if (phy2.date !== '2002-05-30T09:30:10.5') {
         return false;
     }
 

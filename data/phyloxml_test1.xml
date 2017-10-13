@@ -37,6 +37,7 @@
       <name>t3</name>
       <id provider="treebank">1-1</id>
       <description>test phylogeny</description>
+      <date>2002-05-30T09:30:10.5</date>
       <confidence type="ml">0.1</confidence>
       <clade branch_length="0.1">
          <name>root node</name>
