@@ -1,6 +1,6 @@
 /**
- *  Copyright (C) 2016 Christian M. Zmasek
- *  Copyright (C) 2016 J. Craig Venter Institute
+ *  Copyright (C) 2017 Christian M. Zmasek
+ *  Copyright (C) 2017 J. Craig Venter Institute
  *  All rights reserved
  *
  *  This library is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 
 /**
  *
- * Version 0.912 20161213
+ * Version 0.912 20171013
  *
  * This requires sax-js from https://github.com/isaacs/sax-js
  *
@@ -1096,7 +1096,9 @@
         openPhyloXml();
         openPhylogeny(phy, [PHYLOGENY_ROOTED_ATTR, PHYLOGENY_REROOTABLE_ATTR,
             PHYLOGENY_BRANCH_LENGTH_UNIT_ATTR, PHYLOGENY_TYPE_ATTR]);
-
+        addSingleElement(PHYLOGENY_NAME, phy.name);
+        addSingleElement(PHYLOGENY_DESCRIPTION, phy.description);
+        addSingleElement(PHYLOGENY_DATE, phy.date);
         if (phy.children && phy.children.length === 1) {
             toPhyloXMLhelper(phy.children[0]);
         }
