@@ -25,8 +25,8 @@
 			  <synonym>Bufonoidea</synonym>
 			  <synonym>Bufonoideas</synonym>
               <rank>species</rank>
-			  <uri>http://ebi1.uniprot.org/taxonomy/119767</uri>
-			  <uri desc="does not not work" type="ebi">http://ebi1.uniprot.org/taxonomy/000000</uri>
+			  <uri>https://www.uniprot.org/taxonomy/119767</uri>
+			  <uri desc="does not not work" type="ebi">https://www.uniprot.org/taxonomy/000000</uri>
             </taxonomy>
 			<taxonomy>
               <id provider="uniprot">95484</id>
@@ -41,7 +41,7 @@
 			  <gene_name>BCL2</gene_name>
 			  <location>18q21.3</location>
 			  <mol_seq is_aligned="false">MAHAGRTGYDNREIVMKYIHYKLSQRGYEWDAGDVGAAPPGAAPAPGIFS</mol_seq>
-			  <uri>http://www.uniprot.org/uniprot/P10415</uri>
+			  <uri>https://www.uniprot.org/uniprot/P10415</uri>
 			  <annotation ref="GO:0006915">
                 <desc>apoptotic proces</desc>
               </annotation>
