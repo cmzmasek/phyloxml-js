@@ -3,6 +3,8 @@ A SAX style phyloXML parser for JavaScript (JS).
 
 phyloXML website: http://www.phyloxml.org/
 
+npm: https://www.npmjs.com/package/phyloxml
+
 ## Dependencies
 
 This requires sax-js from https://github.com/isaacs/sax-js
