@@ -1,10 +1,11 @@
 # phyloxml.js
-A SAX style phyloXML parser for JavaScript (JS).
+phyloxml.js is a JavaScript program for reading and writing phylogenetic trees in phyloXML format.
 
 phyloXML website: http://www.phyloxml.org/
 
-npm: https://www.npmjs.com/package/phyloxml
-GitHub: https://github.com/cmzmasek/phyloxml-js
+##  Availability
+* npm: https://www.npmjs.com/package/phyloxml
+* GitHub: https://github.com/cmzmasek/phyloxml-js
 
 ## Dependencies
 
