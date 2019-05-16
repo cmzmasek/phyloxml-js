@@ -1,13 +1,14 @@
-# phyloxml-js
+# phyloxml.js
 A SAX style phyloXML parser for JavaScript (JS).
 
 phyloXML website: http://www.phyloxml.org/
 
 npm: https://www.npmjs.com/package/phyloxml
+GitHub: https://github.com/cmzmasek/phyloxml-js
 
 ## Dependencies
 
-This requires sax-js from https://github.com/isaacs/sax-js
+* sax.js (1.2.4): https://www.npmjs.com/package/sax/v/1.2.4
 
 ## Example
 
