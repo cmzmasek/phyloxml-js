@@ -1,5 +1,5 @@
 # phyloxml.js
-phyloxml.js is a JavaScript program for reading and writing phylogenetic trees in phyloXML format.
+phyloxml.js is a JavaScript program for reading (SAX style parser) and writing phylogenetic trees in phyloXML format.
 
 phyloXML website: http://www.phyloxml.org/
 
