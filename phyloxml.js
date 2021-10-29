@@ -90,7 +90,7 @@
     var sax = null;
     if (typeof module !== 'undefined' && module.exports && !global.xmldocAssumeBrowser) {
         // Being used in a Node-like environment
-        sax = require('./sax');
+        sax = require('sax');
     }
     else if (typeof window !== "undefined") {
         // Attached to the Window object in a browser
