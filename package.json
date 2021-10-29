@@ -1,0 +1,32 @@
+{
+  "name": "phyloxml",
+  "version": "1.0.0",
+  "description": "Read and write phylogenetic trees in PhyloXML format.",
+  "main": "phyloxml.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "node test/test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cmzmasek/phyloxml-js.git"
+  },
+  "keywords": [
+    "phyloxml",
+    "evolution",
+    "phylogenetic-trees",
+    "phylogenetics"
+  ],
+  "author": "Christian Zmasek",
+  "license": "LGPL-2.1-only",
+  "bugs": {
+    "url": "https://github.com/cmzmasek/phyloxml-js/issues"
+  },
+  "homepage": "https://github.com/cmzmasek/phyloxml-js#readme",
+  "dependencies": {
+    "sax": "^1.2.4"
+  }
+}
