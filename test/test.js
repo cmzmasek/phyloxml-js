@@ -48,6 +48,7 @@ console.log("Clade Relation     : " + ( testCladeRelation() === true ? "pass" : 
 console.log("Sequence Relation  : " + ( testSequenceRelation() === true ? "pass" : "FAIL" ));
 console.log("UTF8               : " + ( testUTF8() === true ? "pass" : "FAIL" ));
 console.log("Roundtrip          : " + ( testRoundtrip() === true ? "pass" : "FAIL" ));
+console.log("No schemaLocation  : " + ( testNoSchemaLocationHint() === true ? "pass" : "FAIL" ));
 
 
 function readPhyloXmlFromFile(fileName) {
@@ -1357,3 +1358,33 @@ function testRoundtrip() {
     return true;
 }
 
+// The writer must NOT emit an xsi:schemaLocation hint, and the parser MUST
+// still accept files that carry one. Both halves matter: phyloxml.org lapsed
+// and is held by an unrelated party, so writing a pointer to it is writing a
+// pointer to somewhere we no longer control -- but every phyloXML file
+// written before 2026-09-10 has that hint in it, and those must keep opening.
+// The NAMESPACE is untouched on purpose: it is an opaque identifier, not a
+// location, and changing it would break the format.
+function testNoSchemaLocationHint() {
+    var phys = readPhyloXmlFromFile(t1);
+
+    // the fixture itself still carries the old hint -- that is what makes the
+    // second half of this test meaningful
+    var src = fs.readFileSync(t1, 'utf8');
+    if (src.indexOf('schemaLocation') < 0) {
+        return false;   // fixture no longer exercises the legacy form
+    }
+    if (phys.length < 1) {
+        return false;   // a file WITH the hint must parse
+    }
+
+    var x = px.toPhyloXML(phys[0], 6);
+    if (x.indexOf('schemaLocation') >= 0 || x.indexOf('xmlns:xsi') >= 0) {
+        return false;   // never written
+    }
+    if (x.indexOf('<phyloxml xmlns="http://www.phyloxml.org">') < 0) {
+        return false;   // the namespace stays exactly as it was
+    }
+    // and our own hint-free output reads back
+    return px.parse(x).length === 1;
+}

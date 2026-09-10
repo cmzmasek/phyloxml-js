@@ -273,7 +273,18 @@
     var X_SIMPLE_CHARACTERISTIC_NA = 'NA';
 
     // appType (special for Virus BRC)
-    var APPTYPE = 'flu_type';
+    // REMOVED 2026-09-10: var APPTYPE = 'flu_type'.
+    // A hardcoded reader for <flu_type>, an IRD/BV-BRC extension element that
+    // is not part of phyloXML. It set phylogeny.desc, which nothing in
+    // Archaeopteryx.js ever read and which the writer below never wrote back,
+    // so the value was inert in both directions. It also only worked where
+    // those files happened to put the element, BEFORE the clade, which is a
+    // position the phyloXML schema does not allow: at the position the schema
+    // does require (last, under the ##other wildcard) the handler fired with
+    // an empty object stack and killed the parse. Extension elements belong
+    // in their own namespace and are ignored by this reader; anything worth
+    // surfacing should come through <property>, which is phyloXML's own
+    // extension mechanism and is already supported.
 
     // Unknown source, id, confidence type:
     var UNKNOWN = 'unknown';
@@ -584,12 +595,6 @@
         }
     }
 
-    function inAppType(text) {
-        if (getCurrentTag() === APPTYPE) {
-            getCurrentObject().desc = text;
-        }
-    }
-
     function inBranchColor(text) {
         if (getCurrentTag() === COLOR_RED) {
             getCurrentObject().red = parseIntNumber(text);
@@ -890,6 +895,19 @@
     }
 
     function phyloxmlOntext(text) {
+        // Text belonging to no object at all. That happens for content the
+        // reader does not model sitting outside every element it does -- a
+        // foreign-namespace extension after the tree, for instance, which
+        // phyloXML explicitly permits through its ##other wildcard and puts
+        // at the END of a phylogeny, past the point where this parser has
+        // popped the phylogeny off the stack. There is nothing to attach the
+        // text to, so it is skipped. Without this the handlers below reach
+        // into an empty stack and the whole parse dies on a file that is
+        // perfectly valid: a viewer that refuses a valid file is worse than
+        // one that ignores an element it has no use for.
+        if (_objectStack.isEmpty()) {
+            return;
+        }
         var parentTag = _tagStack.get(1);
         var currentTag = _tagStack.peek();
         if (parentTag === CLADE) {
@@ -927,9 +945,6 @@
         }
         if (currentTag === ACCESSION) {
             inAccession(text);
-        }
-        else if (currentTag === APPTYPE) {
-            inAppType(text);
         }
         else if (currentTag === CONFIDENCE) {
             inConfidence(text);
@@ -1358,7 +1373,24 @@
         function openPhyloXml() {
             ind = '';
             x += '<?xml version="1.0" encoding="UTF-8"?>\n';
-            x += '<phyloxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.phyloxml.org http://www.phyloxml.org/1.20/phyloxml.xsd" xmlns="http://www.phyloxml.org">\n';
+            // No xsi:schemaLocation hint. It used to point at
+            // http://www.phyloxml.org/1.20/phyloxml.xsd, and phyloxml.org
+            // lapsed: the domain is held by an unrelated party now, so a tool
+            // that honours the hint and fetches it reaches whatever they
+            // serve. The hint was never needed to read a file -- it is advice
+            // to a validator about where a schema MIGHT live, not part of the
+            // format -- so writing it is a pointer to somewhere we no longer
+            // control for no benefit.
+            //
+            // The NAMESPACE below is deliberately unchanged. It happens to
+            // look like a URL but it is an opaque identifier, it is in every
+            // phyloXML file in existence, and nothing dereferences it.
+            // Changing it would break the format rather than protect anyone.
+            //
+            // Files that still CARRY the hint must keep parsing -- every
+            // phyloXML file written before 2026-09-10 has one. The parser
+            // ignores it either way; see the round-trip test.
+            x += '<phyloxml xmlns="http://www.phyloxml.org">\n';
         }
 
         function closePhyloXml() {
