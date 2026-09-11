@@ -17,7 +17,7 @@
     "url": "git+https://github.com/cmzmasek/phyloxml-js.git"
   },
   "dependencies": {
-    "sax": "^1.4.1"
+    "sax": "^1.6.1"
   },
   "keywords": [
     "phyloXML",

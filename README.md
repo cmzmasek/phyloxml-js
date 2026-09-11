@@ -9,7 +9,7 @@ phyloXML website: http://www.phyloxml.org/
 
 ## Dependencies
 
-* sax (^1.4.1): https://www.npmjs.com/package/sax
+* sax (^1.6.1): https://www.npmjs.com/package/sax
 
 In Node, `sax` is resolved as an ordinary dependency. In a browser,
 include a `sax.js` build before `phyloxml.js` so that `window.sax` is
