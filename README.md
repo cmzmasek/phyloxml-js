@@ -9,7 +9,7 @@ phyloXML website: http://www.phyloxml.org/
 
 ## Dependencies
 
-* sax.js (1.2.4): https://www.npmjs.com/package/sax/v/1.2.4
+* sax (^1.4.1): https://www.npmjs.com/package/sax
 
 ## Example
 

@@ -27,28 +27,53 @@ var px = require('../phyloxml').phyloXml;
 
 var t1 = require('path').join(__dirname, "./data/phyloxml_test_1.xml");
 
-console.log("Accession          : " + ( testAccession() === true ? "pass" : "FAIL" ));
-console.log("Annotation         : " + ( testAnnotation() === true ? "pass" : "FAIL" ));
-console.log("Branch Color       : " + ( testBranchColor() === true ? "pass" : "FAIL" ));
-console.log("Confidence         : " + ( testConfidence() === true ? "pass" : "FAIL" ));
-console.log("Cross-References   : " + ( testCrossReferences() === true ? "pass" : "FAIL" ));
-console.log("Date               : " + ( testDate() === true ? "pass" : "FAIL" ));
-console.log("Distribution       : " + ( testDistribution() === true ? "pass" : "FAIL" ));
-console.log("Domain Architecture: " + ( testDomainArchitecture() === true ? "pass" : "FAIL" ));
-console.log("Events             : " + ( testEvents() === true ? "pass" : "FAIL" ));
-console.log("Id                 : " + ( testId() === true ? "pass" : "FAIL" ));
-console.log("Property           : " + ( testProperty() === true ? "pass" : "FAIL" ));
-console.log("Reference          : " + ( testReference() === true ? "pass" : "FAIL" ));
-console.log("Sequence           : " + ( testSequence() === true ? "pass" : "FAIL" ));
-console.log("Taxonomy           : " + ( testTaxonomy() === true ? "pass" : "FAIL" ));
-console.log("URI                : " + ( testUri() === true ? "pass" : "FAIL" ));
-console.log("Clade              : " + ( testClade() === true ? "pass" : "FAIL" ));
-console.log("Phylogeny          : " + ( testPhylogeny() === true ? "pass" : "FAIL" ));
-console.log("Clade Relation     : " + ( testCladeRelation() === true ? "pass" : "FAIL" ));
-console.log("Sequence Relation  : " + ( testSequenceRelation() === true ? "pass" : "FAIL" ));
-console.log("UTF8               : " + ( testUTF8() === true ? "pass" : "FAIL" ));
-console.log("Roundtrip          : " + ( testRoundtrip() === true ? "pass" : "FAIL" ));
-console.log("No schemaLocation  : " + ( testNoSchemaLocationHint() === true ? "pass" : "FAIL" ));
+// Count failures and EXIT NON-ZERO on any. Before this the harness printed
+// "FAIL" and exited 0 regardless, so `npm test` reported success with tests
+// failing -- a harness that gives a wrong answer nothing argues with.
+var failed = 0;
+
+function runTest(name, fn) {
+    var ok = false;
+    try {
+        ok = fn() === true;
+    } catch (e) {
+        console.log('    ' + name + ' threw: ' + e.message);
+    }
+    if (!ok) {
+        failed++;
+    }
+    console.log(name + ': ' + (ok ? 'pass' : 'FAIL'));
+}
+
+runTest("Versions agree      ", testVersionsAgree);
+runTest("Accession          ", testAccession);
+runTest("Annotation         ", testAnnotation);
+runTest("Branch Color       ", testBranchColor);
+runTest("Confidence         ", testConfidence);
+runTest("Cross-References   ", testCrossReferences);
+runTest("Date               ", testDate);
+runTest("Distribution       ", testDistribution);
+runTest("Domain Architecture", testDomainArchitecture);
+runTest("Events             ", testEvents);
+runTest("Id                 ", testId);
+runTest("Property           ", testProperty);
+runTest("Reference          ", testReference);
+runTest("Sequence           ", testSequence);
+runTest("Taxonomy           ", testTaxonomy);
+runTest("URI                ", testUri);
+runTest("Clade              ", testClade);
+runTest("Phylogeny          ", testPhylogeny);
+runTest("Clade Relation     ", testCladeRelation);
+runTest("Sequence Relation  ", testSequenceRelation);
+runTest("UTF8               ", testUTF8);
+runTest("Roundtrip          ", testRoundtrip);
+runTest("No schemaLocation  ", testNoSchemaLocationHint);
+
+if (failed > 0) {
+    console.log('\n' + failed + ' test(s) FAILED');
+    process.exit(1);
+}
+console.log('\nAll tests passed');
 
 
 function readPhyloXmlFromFile(fileName) {
@@ -1387,4 +1412,24 @@ function testNoSchemaLocationHint() {
     }
     // and our own hint-free output reads back
     return px.parse(x).length === 1;
+}
+
+// The version lives in TWO places here and they must agree. archaeopteryx-js
+// shipped 3.2.0 to npm reporting itself as 3.1.0 for exactly this reason, and
+// npm versions are immutable, so the correction cost a whole extra release.
+// This repo had already drifted: package.json said 1.0.1 while the header in
+// phyloxml.js still said 1.0.0.
+function testVersionsAgree() {
+    var pkg = JSON.parse(fs.readFileSync(require('path').join(__dirname, '..', 'package.json'), 'utf8')).version;
+    var src = fs.readFileSync(require('path').join(__dirname, '..', 'phyloxml.js'), 'utf8');
+    var m = src.match(/^\/\/ v (\d+\.\d+\.\d+)\s*$/m);
+    if (!m) {
+        console.log('    no "// v X.Y.Z" header found in phyloxml.js');
+        return false;
+    }
+    if (m[1] !== pkg) {
+        console.log('    package.json says ' + pkg + ' but phyloxml.js header says ' + m[1]);
+        return false;
+    }
+    return true;
 }

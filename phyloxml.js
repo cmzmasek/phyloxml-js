@@ -20,7 +20,7 @@
  *  Created by czmasek on 7/7/2016.
  */
 
-// v 1.0.0
+// v 1.0.2
 // 2019-05-16
 //
 // phyloxml.js is a JavaScript program for reading (SAX style parser)
@@ -89,8 +89,14 @@
 
     var sax = null;
     if (typeof module !== 'undefined' && module.exports && !global.xmldocAssumeBrowser) {
-        // Being used in a Node-like environment
-        sax = require('./sax');
+        // Being used in a Node-like environment: the sax DEPENDENCY, not a
+        // relative path. './sax' looked for a sax.js beside this file, which
+        // has never existed -- not in the published tarball (files ships four
+        // files and no sax) and not in the repo either, where the vendored
+        // copy sits in lib/. So `require('phyloxml')` threw "Cannot find
+        // module './sax'" for every Node consumer, and the test suite in
+        // test/ could not run at all.
+        sax = require('sax');
     }
     else if (typeof window !== "undefined") {
         // Attached to the Window object in a browser

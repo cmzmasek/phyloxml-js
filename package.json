@@ -1,6 +1,6 @@
 {
   "name": "phyloxml",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "phyloxml.js is a JavaScript program for reading (SAX style parser) and writing phylogenetic trees in phyloXML format.",
   "main": "phyloxml.js",
   "files": [
@@ -10,14 +10,14 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test/test.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/cmzmasek/phyloxml-js.git"
   },
   "dependencies": {
-    "sax": "git+https://github.com/isaacs/sax-js.git"
+    "sax": "^1.4.1"
   },
   "keywords": [
     "phyloXML",
