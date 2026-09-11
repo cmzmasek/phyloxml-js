@@ -11,6 +11,12 @@ phyloXML website: http://www.phyloxml.org/
 
 * sax (^1.4.1): https://www.npmjs.com/package/sax
 
+In Node, `sax` is resolved as an ordinary dependency. In a browser,
+include a `sax.js` build before `phyloxml.js` so that `window.sax` is
+defined; this repository no longer carries a copy of its own (there was
+a vendored `lib/sax.js`, unpublished and unreferenced, frozen at the
+1.2.4 era -- removed 2026-09-11 in favour of the dependency).
+
 ## Example
 
 This basic example shows how to parse a phyloXML formatted String

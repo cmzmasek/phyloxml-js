@@ -91,11 +91,11 @@
     if (typeof module !== 'undefined' && module.exports && !global.xmldocAssumeBrowser) {
         // Being used in a Node-like environment: the sax DEPENDENCY, not a
         // relative path. './sax' looked for a sax.js beside this file, which
-        // has never existed -- not in the published tarball (files ships four
-        // files and no sax) and not in the repo either, where the vendored
-        // copy sits in lib/. So `require('phyloxml')` threw "Cannot find
-        // module './sax'" for every Node consumer, and the test suite in
-        // test/ could not run at all.
+        // never existed -- the published tarball has no sax in it, and the
+        // repo's own vendored copy sat in lib/ (itself unpublished and
+        // unreferenced, and since removed in favour of this dependency). So
+        // `require('phyloxml')` threw "Cannot find module './sax'" for every
+        // Node consumer, and the test suite in test/ could not run at all.
         sax = require('sax');
     }
     else if (typeof window !== "undefined") {
