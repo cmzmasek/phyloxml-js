@@ -68,6 +68,7 @@ runTest("Sequence Relation  ", testSequenceRelation);
 runTest("UTF8               ", testUTF8);
 runTest("Roundtrip          ", testRoundtrip);
 runTest("No schemaLocation  ", testNoSchemaLocationHint);
+runTest("Clade dates        ", testCladeDates);
 
 if (failed > 0) {
     console.log('\n' + failed + ' test(s) FAILED');
@@ -1429,6 +1430,116 @@ function testVersionsAgree() {
     }
     if (m[1] !== pkg) {
         console.log('    package.json says ' + pkg + ' but phyloxml.js header says ' + m[1]);
+        return false;
+    }
+    return true;
+}
+
+// Until 2026-09-17 no clade <date> was written at all: only the phylogeny-level
+// one was, so a dated tree read in and written back out lost its whole time
+// dimension, silently. Archaeopteryx.js found it by round trip -- 9 dated nodes
+// into docs/data/ammonite-time-tree.xml, 0 back out -- while the desktop
+// Archaeopteryx had been writing them correctly all along, so the same tree
+// saved by the two programs disagreed. This pins the shape they agreed on.
+function testCladeDates() {
+    var src = [
+        '<phyloxml xmlns="http://www.phyloxml.org">',
+        ' <phylogeny rooted="true">',
+        '  <clade><name>r</name>',
+        '   <date unit="mya"><desc>split</desc><value>250.0</value></date>',
+        '   <clade><name>a</name>',
+        // TreeAnnotator's bounds for a tip it dated EXACTLY: one number twice.
+        // A writer must not "tidy" this -- what counts as a genuine width is
+        // for whoever DRAWS it to decide, never for whoever stores it.
+        '    <date unit="mya"><value>9.0</value><minimum>9.0</minimum>',
+        '     <maximum>9.000000000000004</maximum></date>',
+        '   </clade>',
+        '   <clade><name>b</name><date unit=""><desc>desc only</desc></date></clade>',
+        // NO unit attribute at all -- the writer must still emit unit="".
+        // The `unit=""` case above does NOT exercise that branch: the reader
+        // takes the empty string straight from the file, so the "no unit"
+        // default is never reached. Sabotage caught this gap.
+        '   <clade><name>e</name><date><value>5</value></date></clade>',
+        // every BEAST tip is at height 0, and 0 must not be mistaken for absent
+        '   <clade><name>c</name><date unit="year"><value>0</value></date></clade>',
+        '   <clade><name>d</name></clade>',
+        '  </clade>',
+        ' </phylogeny>',
+        '</phyloxml>'].join('\n');
+
+    var phy = px.parse(src, {trim: true, normalize: true})[0];
+    var out = px.toPhyloXML(phy, 6);
+
+    // the ATTRIBUTE, always written, empty when the date has no unit
+    if (out.indexOf('<date unit="mya">') < 0 || out.indexOf('<date unit="">') < 0
+        || out.indexOf('<date unit="year">') < 0) {
+        console.log('    unit is not always an attribute on <date>');
+        return false;
+    }
+    // the fixed child order: desc, value, minimum, maximum. Another order is
+    // schema-INVALID, not merely different.
+    // collapse whitespace BETWEEN tags only. Stripping all of it would also
+    // eat the space in `<date unit="year">` and no attribute pattern could
+    // ever match -- which is exactly what this test did at first.
+    var order = out.replace(/>\s+</g, '><');
+    if (order.indexOf('<desc>split</desc><value>250</value>') < 0) {
+        console.log('    desc/value order wrong or missing');
+        return false;
+    }
+    if (order.indexOf('<value>9</value><minimum>9</minimum><maximum>9.000000000000004</maximum>') < 0) {
+        console.log('    value/minimum/maximum order wrong, or the bounds were rounded');
+        return false;
+    }
+    // a node with no date writes no <date>; 0 is a value, not absent
+    if ((out.match(/<date/g) || []).length !== 5) {
+        console.log('    expected exactly 5 <date> elements, got '
+            + (out.match(/<date/g) || []).length);
+        return false;
+    }
+    // a date that arrived with no unit attribute still gets unit=""
+    if (order.indexOf('<name>e</name><date unit=""><value>5</value>') < 0) {
+        console.log('    a date with no unit did not get unit=""');
+        return false;
+    }
+    if (order.indexOf('<name>e</name><date>') >= 0) {
+        console.log('    <date> was written without its unit attribute');
+        return false;
+    }
+    if (order.indexOf('<name>c</name><date unit="year"><value>0</value>') < 0) {
+        console.log('    a date value of 0 was dropped');
+        return false;
+    }
+
+    // and the whole point: it comes back identical
+    var back = px.parse(out, {trim: true, normalize: true})[0];
+    function dates(n, acc) {
+        if (n.date) {
+            // An absent unit and unit="" are the same thing -- both are falsy
+            // wherever a unit is asked for -- and the desktop always writes the
+            // attribute, so a date that arrives WITHOUT one comes back with an
+            // empty one. That is inherent to matching their file, and the file
+            // is what the two programs must agree on; it is also stable, since
+            // writing the re-read tree gives the identical file again. Compared
+            // with the unit normalised, so this asserts the values, not that.
+            var d = {};
+            Object.keys(n.date).forEach(function (k) { d[k] = n.date[k]; });
+            if (d.unit === undefined || d.unit === null) {
+                d.unit = '';
+            }
+            acc.push(n.name + ':' + JSON.stringify(d));
+        }
+        (n.children || []).forEach(function (c) { dates(c, acc); });
+        return acc;
+    }
+    var before = dates(phy, []);
+    var after = dates(back, []);
+    if (before.length !== 5) {
+        console.log('    fixture problem: ' + before.length + ' dated nodes read, expected 5');
+        return false;
+    }
+    if (JSON.stringify(before) !== JSON.stringify(after)) {
+        console.log('    round trip changed the dates:\n     in  ' + before.join('\n     in  ')
+            + '\n     out ' + after.join('\n     out '));
         return false;
     }
     return true;
