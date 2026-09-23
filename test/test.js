@@ -69,6 +69,7 @@ runTest("UTF8               ", testUTF8);
 runTest("Roundtrip          ", testRoundtrip);
 runTest("No schemaLocation  ", testNoSchemaLocationHint);
 runTest("Clade dates        ", testCladeDates);
+runTest("Zero branch lengths", testZeroBranchLengths);
 
 if (failed > 0) {
     console.log('\n' + failed + ' test(s) FAILED');
@@ -1540,6 +1541,52 @@ function testCladeDates() {
     if (JSON.stringify(before) !== JSON.stringify(after)) {
         console.log('    round trip changed the dates:\n     in  ' + before.join('\n     in  ')
             + '\n     out ' + after.join('\n     out '));
+        return false;
+    }
+    return true;
+}
+
+
+// A branch length of ZERO must survive a write. It is a length, not an absent
+// value: identical sequences give zero-length branches, and a multifurcation
+// read from Newick is written as a run of them. The writer used to test the
+// number for truthiness, so every one of them was dropped and came back
+// undefined -- silently, and on real files.
+function testZeroBranchLengths() {
+    var phy = {
+        children: [{
+            name: 'root',
+            branch_length: 0,
+            children: [
+                {name: 'A', branch_length: 0},
+                {name: 'B', branch_length: 0.25},
+                {name: 'C', branch_length: 0.0}
+            ]
+        }]
+    };
+    var xml = px.toPhyloXML(phy, 9);
+    var zeros = (xml.match(/<branch_length>0<\/branch_length>/g) || []).length;
+    if (zeros !== 3) {
+        console.log('    expected three zero branch lengths written, got ' + zeros + '\n' + xml);
+        return false;
+    }
+    var back = px.parse(xml, {trim: true, normalize: true})[0];
+    var got = {};
+    (function walk(n) {
+        if (n.name) {
+            got[n.name] = n.branch_length;
+        }
+        (n.children || []).forEach(walk);
+    })(back);
+    if (got.root !== 0 || got.A !== 0 || got.C !== 0 || got.B !== 0.25) {
+        console.log('    a branch length changed across the round trip: ' + JSON.stringify(got));
+        return false;
+    }
+    // and a node with NO branch length still writes none -- absent and zero
+    // are different things, and this is the half a truthiness test got right
+    var none = px.toPhyloXML({children: [{name: 'x', children: [{name: 'y'}]}]}, 9);
+    if (none.indexOf('<branch_length>') > -1) {
+        console.log('    a branch length was invented for a node without one\n' + none);
         return false;
     }
     return true;
