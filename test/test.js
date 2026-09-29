@@ -1456,11 +1456,10 @@ function testCladeDates() {
         '    <date unit="mya"><value>9.0</value><minimum>9.0</minimum>',
         '     <maximum>9.000000000000004</maximum></date>',
         '   </clade>',
+        // an EMPTY unit, and NO unit attribute at all: two branches of the
+        // writer (the reader hands over '' for the first and nothing for the
+        // second), and both are written <date>, with no attribute
         '   <clade><name>b</name><date unit=""><desc>desc only</desc></date></clade>',
-        // NO unit attribute at all -- the writer must still emit unit="".
-        // The `unit=""` case above does NOT exercise that branch: the reader
-        // takes the empty string straight from the file, so the "no unit"
-        // default is never reached. Sabotage caught this gap.
         '   <clade><name>e</name><date><value>5</value></date></clade>',
         // every BEAST tip is at height 0, and 0 must not be mistaken for absent
         '   <clade><name>c</name><date unit="year"><value>0</value></date></clade>',
@@ -1472,10 +1471,18 @@ function testCladeDates() {
     var phy = px.parse(src, {trim: true, normalize: true})[0];
     var out = px.toPhyloXML(phy, 6);
 
-    // the ATTRIBUTE, always written, empty when the date has no unit
-    if (out.indexOf('<date unit="mya">') < 0 || out.indexOf('<date unit="">') < 0
-        || out.indexOf('<date unit="year">') < 0) {
-        console.log('    unit is not always an attribute on <date>');
+    // the unit is an ATTRIBUTE, written when the date states one and left out
+    // when it states none or an empty one -- as the desktop's writer does,
+    // which skips an attribute with nothing in it. This pinned unit="" until
+    // 1.1.1, as "the shape they agreed on": agreed, and never run against a
+    // file the desktop had written (Christian, 2026-09-29: JS follows).
+    var count = function (s) {
+        return out.split(s).length - 1;
+    };
+    if (count('<date unit="mya">') !== 2 || count('<date unit="year">') !== 1 || count('<date>') !== 2
+        || count('unit=""') !== 0) {
+        console.log('    expected <date unit="mya"> twice, <date unit="year"> once, <date> twice and no empty unit; got '
+            + [count('<date unit="mya">'), count('<date unit="year">'), count('<date>'), count('unit=""')].join(', '));
         return false;
     }
     // the fixed child order: desc, value, minimum, maximum. Another order is
@@ -1498,13 +1505,14 @@ function testCladeDates() {
             + (out.match(/<date/g) || []).length);
         return false;
     }
-    // a date that arrived with no unit attribute still gets unit=""
-    if (order.indexOf('<name>e</name><date unit=""><value>5</value>') < 0) {
-        console.log('    a date with no unit did not get unit=""');
+    // a date that arrived with no unit attribute is written with none, and
+    // so is one that arrived with an empty one
+    if (order.indexOf('<name>e</name><date><value>5</value>') < 0) {
+        console.log('    a date with no unit should be written <date>, with no attribute');
         return false;
     }
-    if (order.indexOf('<name>e</name><date>') >= 0) {
-        console.log('    <date> was written without its unit attribute');
+    if (order.indexOf('<name>b</name><date><desc>desc only</desc>') < 0) {
+        console.log('    a date with an EMPTY unit should be written <date>, with no attribute');
         return false;
     }
     if (order.indexOf('<name>c</name><date unit="year"><value>0</value>') < 0) {
@@ -1517,12 +1525,10 @@ function testCladeDates() {
     function dates(n, acc) {
         if (n.date) {
             // An absent unit and unit="" are the same thing -- both are falsy
-            // wherever a unit is asked for -- and the desktop always writes the
-            // attribute, so a date that arrives WITHOUT one comes back with an
-            // empty one. That is inherent to matching their file, and the file
-            // is what the two programs must agree on; it is also stable, since
-            // writing the re-read tree gives the identical file again. Compared
-            // with the unit normalised, so this asserts the values, not that.
+            // wherever a unit is asked for -- and neither is written, so a
+            // date that arrives with an EMPTY one comes back with none. It is
+            // stable: writing the re-read tree gives the identical file again.
+            // Compared with the unit normalised, so this asserts the values.
             var d = {};
             Object.keys(n.date).forEach(function (k) { d[k] = n.date[k]; });
             if (d.unit === undefined || d.unit === null) {
