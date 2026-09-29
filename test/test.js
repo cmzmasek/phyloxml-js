@@ -70,6 +70,7 @@ runTest("Roundtrip          ", testRoundtrip);
 runTest("No schemaLocation  ", testNoSchemaLocationHint);
 runTest("Clade dates        ", testCladeDates);
 runTest("Zero branch lengths", testZeroBranchLengths);
+runTest("Phylogeny attrs   ", testPhylogenyAttributeOrder);
 
 if (failed > 0) {
     console.log('\n' + failed + ' test(s) FAILED');
@@ -1590,4 +1591,51 @@ function testZeroBranchLengths() {
         return false;
     }
     return true;
+}
+
+// The attributes of <phylogeny> are written in the order the desktop
+// Archaeopteryx (forester's PhylogenyWriter) writes them: rooted,
+// branch_length_unit, type, rerootable. No XML reader cares; the two programs'
+// files are compared byte for byte, and they differed here (this wrote
+// rooted, rerootable, branch_length_unit, type until 1.1.1). The unit is
+// written far more often since the viewer states what a tree's branch lengths
+// measure.
+function testPhylogenyAttributeOrder() {
+    var tree = function (extra) {
+        var phy = {rooted: true, rerootable: false,
+            children: [{name: 'r', children: [{name: 'a', branch_length: 1}, {name: 'b', branch_length: 2}]}]};
+        Object.keys(extra).forEach(function (k) { phy[k] = extra[k]; });
+        return phy;
+    };
+    var tag = function (phy) {
+        return (px.toPhyloXML(phy, 6).match(/<phylogeny[^>]*>/) || ['none'])[0];
+    };
+    var cases = [
+        [{branch_length_unit: 'subs/site', type: 'gene_tree'},
+            '<phylogeny rooted="true" branch_length_unit="subs/site" type="gene_tree" rerootable="false">'],
+        [{branch_length_unit: 'year'}, '<phylogeny rooted="true" branch_length_unit="year" rerootable="false">'],
+        [{type: 'gene_tree'}, '<phylogeny rooted="true" type="gene_tree" rerootable="false">'],
+        [{}, '<phylogeny rooted="true" rerootable="false">']
+    ];
+    for (var i = 0; i < cases.length; ++i) {
+        var got = tag(tree(cases[i][0]));
+        if (got !== cases[i][1]) {
+            console.log('    expected ' + cases[i][1] + '\n    got      ' + got);
+            return false;
+        }
+    }
+    // and every one of them is read back, whatever the order
+    var back = px.parse(px.toPhyloXML(tree(cases[0][0]), 6), {trim: true, normalize: true})[0];
+    if (back.rooted !== true || back.rerootable !== false || back.branch_length_unit !== 'subs/site'
+        || back.type !== 'gene_tree') {
+        console.log('    an attribute was lost across the round trip: ' + JSON.stringify([back.rooted, back.rerootable,
+            back.branch_length_unit, back.type]));
+        return false;
+    }
+    // the desktop's own order is read
+    var theirs = px.parse('<?xml version="1.0" encoding="UTF-8"?><phyloxml xmlns="http://www.phyloxml.org">'
+        + '<phylogeny rooted="true" branch_length_unit="time" type="x" rerootable="true"><clade><name>r</name>'
+        + '<clade><name>a</name><branch_length>1</branch_length></clade></clade></phylogeny></phyloxml>',
+        {trim: true, normalize: true})[0];
+    return theirs.branch_length_unit === 'time' && theirs.type === 'x' && theirs.rerootable === true;
 }

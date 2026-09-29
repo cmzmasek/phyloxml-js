@@ -1145,8 +1145,10 @@
         var x = '';
         var ind = '';
         openPhyloXml();
-        openPhylogeny(phy, [PHYLOGENY_ROOTED_ATTR, PHYLOGENY_REROOTABLE_ATTR,
-            PHYLOGENY_BRANCH_LENGTH_UNIT_ATTR, PHYLOGENY_TYPE_ATTR]);
+        // in the order the desktop (forester) writes them, so that the two
+        // programs' files agree to the byte and not only to an XML reader
+        openPhylogeny(phy, [PHYLOGENY_ROOTED_ATTR, PHYLOGENY_BRANCH_LENGTH_UNIT_ATTR,
+            PHYLOGENY_TYPE_ATTR, PHYLOGENY_REROOTABLE_ATTR]);
         addSingleElement(PHYLOGENY_NAME, phy.name);
         addSingleElement(PHYLOGENY_DESCRIPTION, phy.description);
         addSingleElement(PHYLOGENY_DATE, phy.date);
