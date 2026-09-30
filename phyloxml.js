@@ -20,7 +20,7 @@
  *  Created by czmasek on 7/7/2016.
  */
 
-// v 1.1.3
+// v 1.1.4
 // 2019-05-16
 //
 // phyloxml.js is a JavaScript program for reading (SAX style parser)
@@ -1144,6 +1144,13 @@
     phyloXml.toPhyloXML_ = function (phy, dec) {
         var x = '';
         var ind = '';
+        // The desktop's layout, so that the two programs' files agree to the
+        // byte: <phylogeny> at the margin, two spaces per level below it.
+        // This wrote <phylogeny> one space in and one space per level, and
+        // every file differed on every line (found 2026-09-30 by running the
+        // desktop's released 0.11.173 jar; earlier comparisons had trimmed
+        // indentation and missed it).
+        var INDENT = '  ';
         openPhyloXml();
         // in the order the desktop (forester) writes them, so that the two
         // programs' files agree to the byte and not only to an XML reader
@@ -1383,7 +1390,7 @@
             else {
                 x += (ind + '<' + elemName + '>\n' );
             }
-            ind = ind + ' ';
+            ind = ind + INDENT;
         }
 
         function close(elemName) {
@@ -1400,7 +1407,7 @@
             else {
                 x += ind + '<clade>\n';
             }
-            ind = ind + ' ';
+            ind = ind + INDENT;
         }
 
         function closeClade() {
@@ -1418,19 +1425,19 @@
                 object[PHYLOGENY_REROOTABLE_ATTR] = true;
             }
             if (object && attributeNames && attributeNames.length > 0) {
-                x += ' <phylogeny';
+                x += '<phylogeny';
                 addAttributes(object, attributeNames);
                 x += '>\n';
             }
             else {
-                x += ' <phylogeny>\n';
+                x += '<phylogeny>\n';
             }
-            ind = '  ';
+            ind = INDENT;
         }
 
         function closePhylogeny() {
-            ind = ' ';
-            x += ' </phylogeny>\n';
+            ind = '';
+            x += '</phylogeny>\n';
         }
 
         function openPhyloXml() {
@@ -1456,8 +1463,9 @@
             x += '<phyloxml xmlns="http://www.phyloxml.org">\n';
         }
 
+        // no newline after the last tag, as the desktop writes it
         function closePhyloXml() {
-            x += '</phyloxml>\n';
+            x += '</phyloxml>';
         }
 
         function addAttributes(object, attributeNames) {
@@ -1484,11 +1492,7 @@
         }
 
         function reduceInd() {
-            var l = ind.length;
-            ind = '';
-            for (var i = 0; i <= l - 2; ++i) {
-                ind += ' ';
-            }
+            ind = ind.substring(0, Math.max(0, ind.length - INDENT.length));
         }
 
     }; // toPhyloXML_

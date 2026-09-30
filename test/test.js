@@ -72,6 +72,7 @@ runTest("Clade dates        ", testCladeDates);
 runTest("Zero branch lengths", testZeroBranchLengths);
 runTest("Phylogeny attrs   ", testPhylogenyAttributeOrder);
 runTest("Phylogeny property ", testPhylogenyProperties);
+runTest("Desktop layout     ", testDesktopLayout);
 
 if (failed > 0) {
     console.log('\n' + failed + ' test(s) FAILED');
@@ -1672,7 +1673,7 @@ function testPhylogenyProperties() {
     }
     // after the root clade has closed, before </phylogeny>, in the file's order
     if (lines[at - 1] !== '  </clade>' || lines[at + 1].indexOf('  <property ref="x:note"') !== 0
-        || lines[at + 2] !== ' </phylogeny>') {
+        || lines[at + 2] !== '</phylogeny>') {
         console.log('    not after the clade, in order:\n' + lines.slice(at - 1, at + 3).join('\n'));
         return false;
     }
@@ -1689,4 +1690,28 @@ function testPhylogenyProperties() {
     // and a tree without any writes nothing extra
     delete tree.properties;
     return px.toPhyloXML(tree, 6).indexOf('applies_to="phylogeny"') < 0;
+}
+
+// The two programs' files agree to the BYTE: test/data/layout_desktop_0.11.173.xml
+// is test/data/layout_in.xml read and saved by the desktop Archaeopteryx's
+// released 0.11.173 jar (PhylogenyWriter.toPhyloXML). <phylogeny> at the margin,
+// two spaces per level, no newline after </phyloxml>. Until 1.1.4 this wrote one
+// space per level from one space in, and a final newline; comparisons that
+// trimmed indentation called the files identical.
+function testDesktopLayout() {
+    var dir = require('path').join(__dirname, 'data');
+    var ours = px.toPhyloXML(px.parse(fs.readFileSync(require('path').join(dir, 'layout_in.xml'), 'utf8'),
+        {trim: true, normalize: true})[0], 9);
+    var theirs = fs.readFileSync(require('path').join(dir, 'layout_desktop_0.11.173.xml'), 'utf8');
+    if (ours !== theirs) {
+        var a = theirs.split('\n'), b = ours.split('\n');
+        for (var i = 0; i < Math.max(a.length, b.length); ++i) {
+            if (a[i] !== b[i]) {
+                console.log('    line ' + i + '\n    desktop ' + JSON.stringify(a[i]) + '\n    ours    ' + JSON.stringify(b[i]));
+                break;
+            }
+        }
+        return false;
+    }
+    return true;
 }

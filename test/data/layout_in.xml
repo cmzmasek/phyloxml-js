@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phyloxml xmlns="http://www.phyloxml.org">
+<phylogeny rooted="true" rerootable="false">
+<name>layout</name>
+<description>indentation and the last line, as the desktop writes them</description>
+<clade>
+<clade>
+<name>A</name>
+<branch_length>0.25</branch_length>
+<confidence type="bootstrap">0.5</confidence>
+<taxonomy><code>HUMAN</code><scientific_name>Homo sapiens</scientific_name></taxonomy>
+<sequence type="protein"><name>a1</name><mol_seq is_aligned="true">MKV-L</mol_seq></sequence>
+<property ref="x:n" datatype="xsd:integer" applies_to="node">3</property>
+</clade>
+<clade>
+<branch_length>0.5</branch_length>
+<clade><name>B</name><branch_length>0.125</branch_length><date unit="year"><value>2020.5</value></date></clade>
+<clade><name>C</name><branch_length>0.375</branch_length></clade>
+</clade>
+</clade>
+<property ref="aptx:note" datatype="xsd:string" applies_to="phylogeny">p</property>
+</phylogeny>
+</phyloxml>
