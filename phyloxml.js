@@ -20,7 +20,7 @@
  *  Created by czmasek on 7/7/2016.
  */
 
-// v 1.1.1
+// v 1.1.2
 // 2019-05-16
 //
 // phyloxml.js is a JavaScript program for reading (SAX style parser)
