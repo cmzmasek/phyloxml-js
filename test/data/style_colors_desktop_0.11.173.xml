@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phyloxml xmlns="http://www.phyloxml.org">
+<phylogeny rooted="true" rerootable="false">
+  <clade>
+    <clade>
+      <name>t0</name>
+      <branch_length>0.5</branch_length>
+      <property ref="x:plain" datatype="xsd:token" applies_to="node">#E65050</property>
+      <property ref="style:font_color" datatype="xsd:token" applies_to="node">#e65050</property>
+      <property ref="style:node_color" datatype="xsd:token" applies_to="node">#e65050</property>
+    </clade>
+    <clade>
+      <name>t1</name>
+      <branch_length>0.5</branch_length>
+      <property ref="x:plain" datatype="xsd:token" applies_to="node">#fff</property>
+      <property ref="style:font_color" datatype="xsd:token" applies_to="node">#000fff</property>
+      <property ref="style:node_color" datatype="xsd:token" applies_to="node">#000fff</property>
+    </clade>
+    <clade>
+      <name>t2</name>
+      <branch_length>0.5</branch_length>
+      <property ref="x:plain" datatype="xsd:token" applies_to="node">0xABCDEF</property>
+      <property ref="style:font_color" datatype="xsd:token" applies_to="node">#abcdef</property>
+      <property ref="style:node_color" datatype="xsd:token" applies_to="node">#abcdef</property>
+    </clade>
+    <clade>
+      <name>t3</name>
+      <branch_length>0.5</branch_length>
+      <property ref="x:plain" datatype="xsd:token" applies_to="node">255</property>
+      <property ref="style:font_color" datatype="xsd:token" applies_to="node">#0000ff</property>
+      <property ref="style:node_color" datatype="xsd:token" applies_to="node">#0000ff</property>
+    </clade>
+    <clade>
+      <name>t4</name>
+      <branch_length>0.5</branch_length>
+      <property ref="x:plain" datatype="xsd:token" applies_to="node">0777</property>
+      <property ref="style:font_color" datatype="xsd:token" applies_to="node">#0001ff</property>
+      <property ref="style:node_color" datatype="xsd:token" applies_to="node">#0001ff</property>
+    </clade>
+    <clade>
+      <name>t5</name>
+      <branch_length>0.5</branch_length>
+      <property ref="x:plain" datatype="xsd:token" applies_to="node">-1</property>
+      <property ref="style:font_color" datatype="xsd:token" applies_to="node">#ffffff</property>
+      <property ref="style:node_color" datatype="xsd:token" applies_to="node">#ffffff</property>
+    </clade>
+    <clade>
+      <name>t6</name>
+      <branch_length>0.5</branch_length>
+      <property ref="x:plain" datatype="xsd:token" applies_to="node">#1A2B3C</property>
+      <property ref="style:font_color" datatype="xsd:token" applies_to="node">#1a2b3c</property>
+      <property ref="style:node_color" datatype="xsd:token" applies_to="node">#1a2b3c</property>
+    </clade>
+    <clade>
+      <name>t7</name>
+      <branch_length>0.5</branch_length>
+      <property ref="x:plain" datatype="xsd:token" applies_to="node">0X00ff00</property>
+      <property ref="style:font_color" datatype="xsd:token" applies_to="node">#00ff00</property>
+      <property ref="style:node_color" datatype="xsd:token" applies_to="node">#00ff00</property>
+    </clade>
+    <clade>
+      <name>t8</name>
+      <branch_length>0.5</branch_length>
+      <property ref="x:plain" datatype="xsd:token" applies_to="node">16777216</property>
+      <property ref="style:font_color" datatype="xsd:token" applies_to="node">#000000</property>
+      <property ref="style:node_color" datatype="xsd:token" applies_to="node">#000000</property>
+    </clade>
+  </clade>
+</phylogeny>
+</phyloxml>

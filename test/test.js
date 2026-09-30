@@ -74,6 +74,7 @@ runTest("Phylogeny attrs   ", testPhylogenyAttributeOrder);
 runTest("Phylogeny property ", testPhylogenyProperties);
 runTest("Desktop layout     ", testDesktopLayout);
 runTest("Every element back ", testEveryElementWritten);
+runTest("Style colours      ", testStyleColors);
 
 if (failed > 0) {
     console.log('\n' + failed + ' test(s) FAILED');
@@ -1758,4 +1759,30 @@ function testEveryElementWritten() {
             }
             return true;
         });
+}
+
+// A node's style colour is written as the desktop writes it, lower-case
+// #rrggbb from the number it denotes: #E65050 -> #e65050, #fff -> #000fff (hex
+// 0xfff, not CSS shorthand), 0777 (octal) -> #0001ff, -1 -> #ffffff,
+// 16777216 -> #000000. A plain property holding the same text is untouched.
+// test/data/style_colors_desktop_0.11.173.xml is test/data/style_colors_in.xml
+// saved by the desktop's released 0.11.173 jar; compared byte for byte.
+function testStyleColors() {
+    var path = require('path');
+    var dir = path.join(__dirname, 'data');
+    var ours = px.toPhyloXML(px.parse(fs.readFileSync(path.join(dir, 'style_colors_in.xml'), 'utf8'),
+        {trim: true, normalize: true})[0], 9);
+    var theirs = fs.readFileSync(path.join(dir, 'style_colors_desktop_0.11.173.xml'), 'utf8');
+    if (ours !== theirs) {
+        var a = theirs.split('\n'), b = ours.split('\n');
+        for (var i = 0; i < Math.max(a.length, b.length); ++i) {
+            if (a[i] !== b[i]) {
+                console.log('    line ' + i + '\n    desktop ' + JSON.stringify(a[i]) + '\n    ours    ' + JSON.stringify(b[i]));
+                break;
+            }
+        }
+        return false;
+    }
+    return ours.indexOf('applies_to="node">#E65050</property>') > 0          // the plain property kept its case
+        && ours.indexOf('"style:font_color" datatype="xsd:token" applies_to="node">#e65050') > 0;
 }
