@@ -75,6 +75,7 @@ runTest("Phylogeny property ", testPhylogenyProperties);
 runTest("Desktop layout     ", testDesktopLayout);
 runTest("Every element back ", testEveryElementWritten);
 runTest("Style colours      ", testStyleColors);
+runTest("Style order        ", testStyleOrder);
 
 if (failed > 0) {
     console.log('\n' + failed + ' test(s) FAILED');
@@ -1785,4 +1786,29 @@ function testStyleColors() {
     }
     return ours.indexOf('applies_to="node">#E65050</property>') > 0          // the plain property kept its case
         && ours.indexOf('"style:font_color" datatype="xsd:token" applies_to="node">#e65050') > 0;
+}
+
+// A node's style properties come after every other property of the clade, in
+// the order the desktop writes them (font, font size, font style, font colour,
+// node shape, node size, node colour, fill) whatever order the file had; a
+// style: property about the clade stays where the file put it.
+// test/data/style_order_desktop_0.11.173.xml is test/data/style_order_in.xml
+// saved by the desktop's released 0.11.173 jar; compared byte for byte.
+function testStyleOrder() {
+    var path = require('path');
+    var dir = path.join(__dirname, 'data');
+    var ours = px.toPhyloXML(px.parse(fs.readFileSync(path.join(dir, 'style_order_in.xml'), 'utf8'),
+        {trim: true, normalize: true})[0], 9);
+    var theirs = fs.readFileSync(path.join(dir, 'style_order_desktop_0.11.173.xml'), 'utf8');
+    if (ours !== theirs) {
+        var a = theirs.split('\n'), b = ours.split('\n');
+        for (var i = 0; i < Math.max(a.length, b.length); ++i) {
+            if (a[i] !== b[i]) {
+                console.log('    line ' + i + '\n    desktop ' + JSON.stringify(a[i]) + '\n    ours    ' + JSON.stringify(b[i]));
+                break;
+            }
+        }
+        return false;
+    }
+    return true;
 }

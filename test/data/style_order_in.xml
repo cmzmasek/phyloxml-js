@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phyloxml xmlns="http://www.phyloxml.org">
+<phylogeny rooted="true" rerootable="false">
+<clade><clade><name>A</name><branch_length>0.5</branch_length>
+<property ref="style:node_fill_type" datatype="xsd:token" applies_to="node">solid</property>
+<property ref="x:first" datatype="xsd:string" applies_to="node">1</property>
+<property ref="style:font_color" datatype="xsd:token" applies_to="clade">#0000FF</property>
+<property ref="style:node_color" datatype="xsd:token" applies_to="node">#00ff00</property>
+<property ref="style:font_color" datatype="xsd:token" applies_to="node">#ff0000</property>
+<property ref="style:node_shape" datatype="xsd:token" applies_to="node">circle</property>
+<property ref="x:second" datatype="xsd:string" applies_to="node">2</property>
+<property ref="style:font_style" datatype="xsd:token" applies_to="node">bold</property>
+<property ref="style:node_size" datatype="xsd:float" applies_to="node">6.0</property>
+<property ref="style:font_size" datatype="xsd:unsignedByte" applies_to="node">12</property>
+<property ref="style:font" datatype="xsd:token" applies_to="node">Arial</property>
+<property ref="style:branch" datatype="xsd:string" applies_to="clade">kept</property>
+</clade><clade><name>B</name><branch_length>0.5</branch_length></clade></clade>
+</phylogeny>
+</phyloxml>
