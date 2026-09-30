@@ -71,6 +71,7 @@ runTest("No schemaLocation  ", testNoSchemaLocationHint);
 runTest("Clade dates        ", testCladeDates);
 runTest("Zero branch lengths", testZeroBranchLengths);
 runTest("Phylogeny attrs   ", testPhylogenyAttributeOrder);
+runTest("Phylogeny property ", testPhylogenyProperties);
 
 if (failed > 0) {
     console.log('\n' + failed + ' test(s) FAILED');
@@ -1644,4 +1645,48 @@ function testPhylogenyAttributeOrder() {
         + '<clade><name>a</name><branch_length>1</branch_length></clade></clade></phylogeny></phyloxml>',
         {trim: true, normalize: true})[0];
     return theirs.branch_length_unit === 'time' && theirs.type === 'x' && theirs.rerootable === true;
+}
+
+// A property of the PHYLOGENY -- the desktop's figure setting, which says
+// which per-tip fields to draw as a matrix -- is written back, after the
+// clade, as a direct child of <phylogeny>, where the schema puts it and the
+// desktop writes it. It was read and then dropped on the way out, so a file
+// saved here lost the setting. A clade's own properties stay on the clade.
+function testPhylogenyProperties() {
+    var figure = 'v1;columns=pgfam:PGF_1\\sMATRIX\\sCIRCLE\\sfalse\\ppgfam:PGF_2\\sMATRIX\\sCIRCLE\\sfalse';
+    var src = '<?xml version="1.0" encoding="UTF-8"?><phyloxml xmlns="http://www.phyloxml.org">'
+        + '<phylogeny rooted="true"><clade><name>r</name>'
+        + '<property ref="pgfam:PGF_1" datatype="xsd:integer" applies_to="node">3</property>'
+        + '<clade><name>a</name><branch_length>1</branch_length></clade></clade>'
+        + '<property ref="aptx:figure" datatype="xsd:string" applies_to="phylogeny">' + figure + '</property>'
+        + '<property ref="x:note" datatype="xsd:string" applies_to="phylogeny">two &amp; more</property>'
+        + '</phylogeny></phyloxml>';
+    var tree = px.parse(src, {trim: true, normalize: true})[0];
+    var out = px.toPhyloXML(tree, 6);
+    var lines = out.split('\n');
+    var at = lines.indexOf('  <property ref="aptx:figure" datatype="xsd:string" applies_to="phylogeny">' + figure
+        + '</property>');
+    if (at < 0) {
+        console.log('    the phylogeny property was not written as a direct child of <phylogeny>:\n' + out);
+        return false;
+    }
+    // after the root clade has closed, before </phylogeny>, in the file's order
+    if (lines[at - 1] !== '  </clade>' || lines[at + 1].indexOf('  <property ref="x:note"') !== 0
+        || lines[at + 2] !== ' </phylogeny>') {
+        console.log('    not after the clade, in order:\n' + lines.slice(at - 1, at + 3).join('\n'));
+        return false;
+    }
+    if (lines.filter(function (l) { return l.indexOf('aptx:figure') >= 0; }).length !== 1) {
+        console.log('    written more than once');
+        return false;
+    }
+    var back = px.parse(out, {trim: true, normalize: true})[0];
+    if (JSON.stringify(back.properties) !== JSON.stringify(tree.properties)
+        || JSON.stringify(back.children[0].properties) !== JSON.stringify(tree.children[0].properties)) {
+        console.log('    not the same properties back: ' + JSON.stringify(back.properties));
+        return false;
+    }
+    // and a tree without any writes nothing extra
+    delete tree.properties;
+    return px.toPhyloXML(tree, 6).indexOf('applies_to="phylogeny"') < 0;
 }
