@@ -73,6 +73,7 @@ runTest("Zero branch lengths", testZeroBranchLengths);
 runTest("Phylogeny attrs   ", testPhylogenyAttributeOrder);
 runTest("Phylogeny property ", testPhylogenyProperties);
 runTest("Desktop layout     ", testDesktopLayout);
+runTest("Every element back ", testEveryElementWritten);
 
 if (failed > 0) {
     console.log('\n' + failed + ' test(s) FAILED');
@@ -1714,4 +1715,47 @@ function testDesktopLayout() {
         return false;
     }
     return true;
+}
+
+// Every element this library reads is written back, as the desktop writes it.
+// Until 1.1.5 the writer dropped domain architectures, sequence and taxonomy
+// URIs, annotations, cross-references, distributions, references and the
+// phylogeny's id and confidence: read in, gone on save. The reference is
+// test/data/complete_in.xml saved by the desktop's released 0.11.173 jar
+// (test/data/complete_desktop_0.11.173.xml), compared WHOLE, numbers
+// normalised (the desktop writes 7.0E-26 where this writes 7e-26, 0.0 for 0):
+// so its order holds too -- annotations by ref then desc, cross-references by
+// source and value, domains by where they start, the phylogeny's last
+// confidence only -- as a Java sorted set and map keep them.
+function testEveryElementWritten() {
+    var path = require('path');
+    var dir = path.join(__dirname, 'data');
+    var num = function (l) {
+        return l.replace(/>(-?[\d.]+(?:E-?\d+)?)</gi, function (m, v) { return '>' + Number(v) + '<'; })
+            .replace(/="(-?[\d.]+(?:E-?\d+)?)"/gi, function (m, v) { return '="' + Number(v) + '"'; });
+    };
+    var ours = px.toPhyloXML(px.parse(fs.readFileSync(path.join(dir, 'complete_in.xml'), 'utf8'),
+        {trim: true, normalize: true})[0], 9).split('\n');
+    var theirs = fs.readFileSync(path.join(dir, 'complete_desktop_0.11.173.xml'), 'utf8').split('\n');
+    if (ours.length !== theirs.length) {
+        console.log('    ' + ours.length + ' lines, the desktop wrote ' + theirs.length);
+    }
+    for (var i = 0; i < Math.max(ours.length, theirs.length); ++i) {
+        if (num(ours[i] || '') !== num(theirs[i] || '')) {
+            console.log('    line ' + i + '\n    desktop ' + JSON.stringify(theirs[i]) + '\n    ours    ' + JSON.stringify(ours[i]));
+            return false;
+        }
+    }
+    // and each of them, by name, so a fixture edit cannot quietly drop one
+    var text = ours.join('\n');
+    return ['<domain_architecture length="1248">', '<annotation ref="GO:0005829"></annotation>',
+        '<cross_references>', '<uri type="linkout" desc="NCBI">', '<distribution>', '<point geodetic_datum="WGS84">',
+        '<reference doi="10.1000/1">', '<id provider="treebank">T1</id>', '<confidence type="pp">0.75</confidence>']
+        .every(function (s) {
+            if (text.indexOf(s) < 0) {
+                console.log('    missing: ' + s);
+                return false;
+            }
+            return true;
+        });
 }

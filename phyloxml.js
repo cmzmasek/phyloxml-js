@@ -20,7 +20,7 @@
  *  Created by czmasek on 7/7/2016.
  */
 
-// v 1.1.4
+// v 1.1.5
 // 2019-05-16
 //
 // phyloxml.js is a JavaScript program for reading (SAX style parser)
@@ -294,6 +294,12 @@
 
     // Unknown source, id, confidence type:
     var UNKNOWN = 'unknown';
+    // the arrays the reader collects repeated elements into
+    var URIS = 'uris';
+    var ANNOTATIONS = 'annotations';
+    var DISTRIBUTIONS = 'distributions';
+    var REFERENCES = 'references';
+    var POINTS = 'points';
 
     // --------------------------------------------------------------
     // Instance variables
@@ -1157,8 +1163,16 @@
         openPhylogeny(phy, [PHYLOGENY_ROOTED_ATTR, PHYLOGENY_BRANCH_LENGTH_UNIT_ATTR,
             PHYLOGENY_TYPE_ATTR, PHYLOGENY_REROOTABLE_ATTR]);
         addSingleElement(PHYLOGENY_NAME, phy.name);
+        if (phy[ID]) {
+            addSingleElement(ID, phy[ID].value, phy[ID], [ID_PROVIDER_ATTR]);
+        }
         addSingleElement(PHYLOGENY_DESCRIPTION, phy.description);
         addSingleElement(PHYLOGENY_DATE, phy.date);
+        // The desktop keeps ONE confidence for a phylogeny, the last one read,
+        // and writes that; the schema allows several, and so does the reader.
+        if (phy[CONFIDENCES] && phy[CONFIDENCES].length > 0) {
+            addConfidence(phy[CONFIDENCES][phy[CONFIDENCES].length - 1]);
+        }
         if (phy.children && phy.children.length === 1) {
             toPhyloXMLhelper(phy.children[0]);
         }
@@ -1235,6 +1249,7 @@
                         }
                     }
                     addSingleElement(TAXONOMY_RANK, tax[TAXONOMY_RANK]);
+                    addUris(tax[URIS]);
                     close(TAXONOMY);
                 }
             }
@@ -1259,6 +1274,10 @@
                         addSingleElement(MOLSEQ, seq[MOLSEQ].value, seq[MOLSEQ],
                             [MOLSEQ_IS_ALIGNED_ATTR]);
                     }
+                    addUris(seq[URIS]);
+                    addAnnotations(seq[ANNOTATIONS]);
+                    addCrossReferences(seq[CROSS_REFERENCES]);
+                    addDomainArchitecture(seq[DOMAIN_ARCHITECTURE]);
                     close(SEQUENCE);
                 }
             }
@@ -1277,6 +1296,8 @@
                 }
                 close(EVENTS);
             }
+
+            addDistributions(node[DISTRIBUTIONS]);
 
             // A clade's <date>. phyloXML's sequence order puts it after
             // <distribution> and before <property>, and its own children are
@@ -1319,6 +1340,8 @@
                 close(DATE);
             }
 
+            addReferences(node[REFERENCES]);
+
             addProperties(node[PROPERTIES]);
 
             if (node.children) {
@@ -1337,6 +1360,169 @@
             closeClade();
 
         } // toPhyloXMLhelper
+
+        // ---- the elements this writer dropped until 1.1.5 --------------------
+        // Each is written as the desktop Archaeopteryx's writer (forester)
+        // writes it, element order, attribute order and all, so a file saved
+        // by either program is the same file. Where the desktop REORDERS --
+        // annotations and cross-references are sorted sets there, domains a map
+        // keyed by their start -- this does the same, duplicates dropped as a
+        // sorted set drops them; files are compared whole, so the order is part
+        // of the format. Pinned against a file written by the 0.11.173 jar
+        // (test/data/complete_desktop_0.11.173.xml).
+
+        function addConfidence(conf) {
+            if (!conf) {
+                return;
+            }
+            if (!conf[CONFIDENCE_TYPE_ATTR]) {
+                conf[CONFIDENCE_TYPE_ATTR] = UNKNOWN;
+            }
+            addSingleElement(CONFIDENCE, conf.value, conf, [CONFIDENCE_TYPE_ATTR, CONFIDENCE_STDDEV_ATTR]);
+        }
+
+        function addUris(uris) {
+            (uris || []).forEach(function (u) {
+                if (u && u.value !== undefined && u.value !== null) {
+                    addSingleElement(URI, u.value, u, [URI_TYPE_ATTR, URI_DESC_ATTR]);
+                }
+            });
+        }
+
+        // an element with attributes and nothing inside, written open and
+        // closed on one line as the desktop writes it: <annotation ref="x"></annotation>
+        function addEmptyElement(elemName, object, attributeNames) {
+            x += ind + '<' + elemName;
+            addAttributes(object, attributeNames);
+            x += '></' + elemName + '>\n';
+        }
+
+        // Sorted, and a second entry the order calls equal is dropped: what a
+        // Java TreeSet with that comparator keeps.
+        function sortedSet(list, compare) {
+            var out = [];
+            (list || []).slice().sort(compare).forEach(function (item) {
+                if (item && (out.length === 0 || compare(out[out.length - 1], item) !== 0)) {
+                    out.push(item);
+                }
+            });
+            return out;
+        }
+
+        function compareStrings(a, b) {
+            a = (a === undefined || a === null) ? '' : String(a);
+            b = (b === undefined || b === null) ? '' : String(b);
+            return a < b ? -1 : (a > b ? 1 : 0);
+        }
+
+        // by ref, then by desc (Annotation.compareTo)
+        function addAnnotations(annotations) {
+            var ANNOTATION_ATTRS = [ANNOTATION_REF_ATTR, ANNOTATION_EVIDENCE_ATTR, ANNOTATION_TYPE_ATTR,
+                ANNOTATION_SOURCE_ATTR];
+            sortedSet(annotations, function (a, b) {
+                return compareStrings(a[ANNOTATION_REF_ATTR], b[ANNOTATION_REF_ATTR])
+                    || compareStrings(a[ANNOTATION_DESC], b[ANNOTATION_DESC]);
+            }).forEach(function (ann) {
+                var hasBody = ann[CONFIDENCE] || (ann[PROPERTIES] && ann[PROPERTIES].length > 0)
+                    || (ann[URIS] && ann[URIS].length > 0)
+                    || (typeof ann[ANNOTATION_DESC] === 'string' && ann[ANNOTATION_DESC].trim().length > 0);
+                if (!hasBody) {
+                    addEmptyElement(ANNOTATION, ann, ANNOTATION_ATTRS);
+                    return;
+                }
+                open(ANNOTATION, ann, ANNOTATION_ATTRS);
+                addSingleElement(ANNOTATION_DESC, ann[ANNOTATION_DESC]);
+                addConfidence(ann[CONFIDENCE]);
+                addProperties(ann[PROPERTIES]);
+                addUris(ann[URIS]);
+                close(ANNOTATION);
+            });
+        }
+
+        // by source then value, run together (Accession's _source_value)
+        function addCrossReferences(xrefs) {
+            var sorted = sortedSet(xrefs, function (a, b) {
+                return compareStrings((a[ACCESSION_SOURCE_ATTR] || '') + a.value,
+                    (b[ACCESSION_SOURCE_ATTR] || '') + b.value);
+            });
+            if (sorted.length < 1) {
+                return;
+            }
+            open(CROSS_REFERENCES);
+            sorted.forEach(function (acc) {
+                var a = {};
+                a[ACCESSION_SOURCE_ATTR] = acc[ACCESSION_SOURCE_ATTR] || UNKNOWN;
+                a[ACCESSION_COMMENT_ATTR] = acc[ACCESSION_COMMENT_ATTR];
+                addSingleElement(ACCESSION, acc.value, a, [ACCESSION_SOURCE_ATTR, ACCESSION_COMMENT_ATTR]);
+            });
+            close(CROSS_REFERENCES);
+        }
+
+        // Domains by where they start; two that start together keep the order
+        // they were read in (the desktop's key nudges the later one up).
+        function addDomainArchitecture(da) {
+            if (!da) {
+                return;
+            }
+            var len = {};
+            len[DOMAIN_ARCHITECTURE_LENGTH_ATTR] = da[DOMAIN_ARCHITECTURE_LENGTH_ATTR];
+            open(DOMAIN_ARCHITECTURE, len, [DOMAIN_ARCHITECTURE_LENGTH_ATTR]);
+            (da.domains || []).map(function (d, i) {
+                return {d: d, i: i};
+            }).sort(function (p, q) {
+                return (p.d.from - q.d.from) || (p.i - q.i);
+            }).forEach(function (e) {
+                var d = e.d;
+                var a = {};
+                a[PROTEINDOMAIN_FROM_ATTR] = d.from;
+                a[PROTEINDOMAIN_TO_ATTR] = d.to;
+                a[PROTEINDOMAIN_CONFIDENCE_ATTR] = (typeof d.confidence === 'number' && isFinite(d.confidence))
+                    ? d.confidence : 0;
+                a[PROTEINDOMAIN_ID_ATTR] = d.id;
+                var name = (d.name === undefined || d.name === null) ? '' : String(d.name);
+                x += ind + '<' + PROTEINDOMAIN;
+                addAttributes(a, [PROTEINDOMAIN_FROM_ATTR, PROTEINDOMAIN_TO_ATTR, PROTEINDOMAIN_CONFIDENCE_ATTR,
+                    PROTEINDOMAIN_ID_ATTR]);
+                x += '>' + replaceUnsafeChars(name) + '</' + PROTEINDOMAIN + '>\n';
+            });
+            close(DOMAIN_ARCHITECTURE);
+        }
+
+        function addDistributions(distributions) {
+            (distributions || []).forEach(function (dist) {
+                var points = (dist[POINTS] || []).filter(function (pt) {
+                    return pt && pt[POINT_LAT] !== undefined && pt[POINT_LAT] !== null
+                        && pt[POINT_LONG] !== undefined && pt[POINT_LONG] !== null;
+                });
+                var desc = typeof dist[DISTRIBUTION_DESC] === 'string' ? dist[DISTRIBUTION_DESC].trim() : '';
+                if (desc.length < 1 && points.length < 1) {
+                    return;
+                }
+                open(DISTRIBUTION);
+                addSingleElement(DISTRIBUTION_DESC, dist[DISTRIBUTION_DESC]);
+                points.forEach(function (pt) {
+                    var hasAlt = pt[POINT_ALT] !== undefined && pt[POINT_ALT] !== null && String(pt[POINT_ALT]).length > 0;
+                    open(POINT, pt, hasAlt ? [POINT_GEODETIC_DATUM_ATTR, POINT_ALT_UNIT_ATTR] : [POINT_GEODETIC_DATUM_ATTR]);
+                    addSingleElement(POINT_LAT, pt[POINT_LAT]);
+                    addSingleElement(POINT_LONG, pt[POINT_LONG]);
+                    if (hasAlt) {
+                        addSingleElement(POINT_ALT, pt[POINT_ALT]);
+                    }
+                    close(POINT);
+                });
+                close(DISTRIBUTION);
+            });
+        }
+
+        // a reference is written open and closed on two lines even when it
+        // holds nothing, as the desktop writes it
+        function addReferences(references) {
+            (references || []).forEach(function (ref) {
+                open(REFERENCE, ref, [REFERENCE_DOI_ATTR]);
+                addSingleElement(REFERENCE_DESC, ref[REFERENCE_DESC]);
+                close(REFERENCE);
+            });
+        }
 
         function addProperties(props) {
             if (!props || props.length < 1) {

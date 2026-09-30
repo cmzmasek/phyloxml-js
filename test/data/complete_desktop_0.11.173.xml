@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phyloxml xmlns="http://www.phyloxml.org">
+<phylogeny rooted="true" rerootable="false">
+  <name>complete</name>
+  <id provider="treebank">T1</id>
+  <description>every element this library reads, for the desktop to write</description>
+  <confidence type="pp">0.75</confidence>
+  <clade>
+    <clade>
+      <name>A</name>
+      <branch_length>0.25</branch_length>
+      <taxonomy>
+        <id provider="ncbi">9606</id>
+        <code>HUMAN</code>
+        <scientific_name>Homo sapiens</scientific_name>
+        <uri type="linkout" desc="NCBI">https://www.ncbi.nlm.nih.gov/taxonomy/9606</uri>
+        <uri>https://en.wikipedia.org/wiki/Human</uri>
+      </taxonomy>
+      <sequence type="protein">
+        <symbol>APAF1</symbol>
+        <accession source="UniProtKB">O14727</accession>
+        <name>apoptotic protease-activating factor 1</name>
+        <mol_seq is_aligned="false">MDAKARNCLL</mol_seq>
+        <uri type="source" desc="UniProt">https://www.uniprot.org/uniprot/O14727</uri>
+        <annotation ref="EC:3.4.22">
+          <desc>cysteine endopeptidase &amp; more</desc>
+        </annotation>
+        <annotation ref="GO:0005829"></annotation>
+        <annotation ref="GO:0006915" evidence="experimental" type="function" source="UniProtKB">
+          <desc>apoptosis</desc>
+          <confidence type="ml" stddev="0.25">0.5</confidence>
+          <property ref="AFFY:expression" unit="AFFY:x" datatype="xsd:double" applies_to="annotation">0.125</property>
+          <uri type="source" desc="QuickGO">https://www.ebi.ac.uk/QuickGO/term/GO:0006915</uri>
+        </annotation>
+        <cross_references>
+          <accession source="KEGG" comment="human">hsa:317</accession>
+          <accession source="PDB">1CY5</accession>
+          <accession source="PDB">1Z6T</accession>
+        </cross_references>
+        <domain_architecture length="1248">
+          <domain from="6" to="90" confidence="7.0E-26" id="PF00619">CARD</domain>
+          <domain from="109" to="414" confidence="0.125">NB-ARC</domain>
+          <domain from="605" to="643" confidence="2.4E-6">WD40</domain>
+          <domain from="605" to="640" confidence="0.5">WD40b</domain>
+        </domain_architecture>
+      </sequence>
+      <distribution>
+        <desc>Durham</desc>
+        <point geodetic_datum="WGS84" alt_unit="m">
+          <lat>35.99</lat>
+          <long>-78.9</long>
+          <alt>120</alt>
+        </point>
+        <point geodetic_datum="WGS84">
+          <lat>36.5</lat>
+          <long>-79.25</long>
+        </point>
+      </distribution>
+      <distribution>
+        <desc>nowhere in particular</desc>
+      </distribution>
+      <date unit="year">
+        <value>2020.5</value>
+      </date>
+      <reference doi="10.1093/bioinformatics/btp084">
+        <desc>Han &amp; Zmasek (2009). phyloXML.</desc>
+      </reference>
+      <reference doi="10.1000/1">
+      </reference>
+      <property ref="x:n" datatype="xsd:integer" applies_to="node">3</property>
+    </clade>
+    <clade>
+      <name>B</name>
+      <branch_length>0.5</branch_length>
+    </clade>
+  </clade>
+</phylogeny>
+</phyloxml>
